@@ -1,191 +1,462 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lest</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Lest is a software engineer working on agent harnesses, context, tools, memory, and runtime systems."
+    >
+    <meta name="theme-color" content="#f7f8f5">
+    <title>Lest | Software Engineer</title>
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-      color: #1d1d1f;
-      background: #fbfbfd;
-      -webkit-font-smoothing: antialiased;
-    }
+    <style>
+      @font-face {
+        font-family: "Geist";
+        src: url("./assets/fonts/Geist-Variable.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: swap;
+      }
 
-    .container {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
+      @font-face {
+        font-family: "Geist Mono";
+        src: url("./assets/fonts/GeistMono-Variable.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: swap;
+      }
 
-    main {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-    }
+      :root {
+        --paper: #f7f8f5;
+        --ink: #171918;
+        --muted: #686d69;
+        --line: #d9ddd7;
+        --page: min(1160px, calc(100% - 48px));
+        --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      }
 
-    .content {
-      padding: 80px 0;
-      width: 100%;
-    }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
 
-    .greeting {
-      font-size: 14px;
-      font-weight: 500;
-      color: #86868b;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
+      html {
+        scroll-behavior: smooth;
+      }
 
-    h1 {
-      font-size: 48px;
-      font-weight: 600;
-      letter-spacing: -0.025em;
-      line-height: 1.1;
-      margin-bottom: 20px;
-    }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--paper);
+        font-family: "Geist", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
 
-    .subtitle {
-      font-size: 20px;
-      font-weight: 400;
-      color: #6e6e73;
-      line-height: 1.5;
-      margin-bottom: 56px;
-    }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
 
-    section {
-      margin-bottom: 48px;
-    }
+      a:focus-visible {
+        outline: 2px solid var(--ink);
+        outline-offset: 5px;
+      }
 
-    .section-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: #86868b;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
+      .skip-link {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        z-index: 10;
+        padding: 9px 12px;
+        color: var(--paper);
+        background: var(--ink);
+        transform: translateY(-160%);
+      }
 
-    .tech-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+      .skip-link:focus {
+        transform: translateY(0);
+      }
 
-    .tech-tag {
-      font-size: 14px;
-      font-weight: 500;
-      color: #1d1d1f;
-      background: #f5f5f7;
-      padding: 6px 14px;
-      border-radius: 100px;
-      transition: background 0.2s;
-    }
+      .shell {
+        width: var(--page);
+        margin-inline: auto;
+      }
 
-    .tech-tag:hover {
-      background: #e8e8ed;
-    }
+      .site-header {
+        height: 66px;
+        border-bottom: 1px solid var(--line);
+      }
 
-    .links {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 100%;
+        font-size: 13px;
+        font-weight: 560;
+      }
 
-    .links a {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 15px;
-      color: #1d1d1f;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
+      .brand {
+        font-weight: 720;
+        letter-spacing: -0.03em;
+      }
 
-    .links a:hover {
-      color: #0071e3;
-    }
+      .nav-links,
+      .contact-links,
+      .other-links {
+        display: flex;
+        align-items: center;
+        gap: 26px;
+      }
 
-    .links svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }
+      .nav a,
+      .contact-links a,
+      .project-link,
+      .other-link {
+        position: relative;
+      }
 
-    footer {
-      padding: 24px 0;
-      border-top: 1px solid #e8e8ed;
-    }
+      .nav a::after,
+      .contact-links a::after,
+      .project-link::after,
+      .other-link::after {
+        position: absolute;
+        right: 0;
+        bottom: -4px;
+        left: 0;
+        height: 1px;
+        content: "";
+        background: currentColor;
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 260ms var(--ease);
+      }
 
-    footer p {
-      font-size: 13px;
-      color: #86868b;
-    }
+      .nav a:hover::after,
+      .contact-links a:hover::after,
+      .project-link:hover::after,
+      .other-link:hover::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
 
-    @media (max-width: 600px) {
+      .about {
+        display: grid;
+        grid-template-columns: minmax(220px, 0.72fr) minmax(440px, 1.28fr);
+        gap: clamp(64px, 10vw, 150px);
+        align-items: start;
+        padding-block: clamp(92px, 11vh, 126px) 72px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
       h1 {
-        font-size: 36px;
+        font-size: clamp(34px, 4vw, 52px);
+        font-weight: 640;
+        letter-spacing: -0.055em;
+        line-height: 1;
       }
 
-      .subtitle {
+      .about-copy {
+        padding-top: 2px;
+      }
+
+      .intro {
+        max-width: 750px;
+        font-size: clamp(28px, 3.1vw, 43px);
+        font-weight: 430;
+        letter-spacing: -0.042em;
+        line-height: 1.15;
+      }
+
+      .intro strong {
+        font-weight: 660;
+      }
+
+      .detail {
+        max-width: 590px;
+        margin-top: 32px;
+        color: var(--muted);
         font-size: 17px;
-        margin-bottom: 40px;
+        line-height: 1.55;
       }
-    }
-  </style>
-</head>
-<body>
-  <main>
-    <div class="container">
-      <div class="content">
-        <p class="greeting">Hey, I'm</p>
-        <h1>Lest.</h1>
-        <p class="subtitle">Full-stack engineer building AI-native tools.</p>
 
-        <section>
-          <p class="section-title">Tech</p>
-          <div class="tech-list">
-            <span class="tech-tag">Go</span>
-            <span class="tech-tag">TypeScript</span>
-            <span class="tech-tag">React</span>
-            <span class="tech-tag">Next.js</span>
-            <span class="tech-tag">PostgreSQL</span>
-            <span class="tech-tag">Electron</span>
+      .contact-links {
+        margin-top: 48px;
+        font-size: 14px;
+        font-weight: 620;
+      }
+
+      .projects {
+        padding-block: 68px 112px;
+        border-top: 1px solid var(--line);
+      }
+
+      h2 {
+        margin-bottom: 68px;
+        font-size: clamp(34px, 4vw, 52px);
+        font-weight: 640;
+        letter-spacing: -0.055em;
+        line-height: 1;
+      }
+
+      .project-list {
+        border-top: 1px solid var(--line);
+      }
+
+      .project {
+        display: grid;
+        grid-template-columns: minmax(220px, 0.78fr) minmax(440px, 1.22fr);
+        gap: clamp(54px, 8vw, 120px);
+        padding-block: 54px 58px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h3 {
+        font-size: clamp(27px, 3vw, 38px);
+        font-weight: 620;
+        letter-spacing: -0.05em;
+        line-height: 1.05;
+      }
+
+      .project-kind,
+      .other-label {
+        display: block;
+        margin-top: 12px;
+        color: var(--muted);
+        font-family: "Geist Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 0.015em;
+      }
+
+      .project-copy p {
+        max-width: 600px;
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      .project-link {
+        display: inline-block;
+        margin-top: 28px;
+        font-size: 14px;
+        font-weight: 630;
+      }
+
+      .other-projects {
+        display: grid;
+        grid-template-columns: minmax(220px, 0.78fr) minmax(440px, 1.22fr);
+        gap: clamp(54px, 8vw, 120px);
+        padding-top: 38px;
+      }
+
+      .other-label {
+        margin-top: 0;
+      }
+
+      .other-links {
+        justify-content: flex-start;
+        font-size: 14px;
+        font-weight: 610;
+      }
+
+      .footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 92px;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+        font-family: "Geist Mono", monospace;
+        font-size: 10px;
+      }
+
+      @media (max-width: 760px) {
+        :root {
+          --page: calc(100% - 32px);
+        }
+
+        .site-header {
+          height: 62px;
+        }
+
+        .nav-links {
+          gap: 20px;
+        }
+
+        .nav-links a:last-child {
+          display: none;
+        }
+
+        .about {
+          grid-template-columns: 1fr;
+          gap: 52px;
+          min-height: auto;
+          padding-block: 82px 72px;
+        }
+
+        h1 {
+          font-size: 38px;
+        }
+
+        .intro {
+          font-size: clamp(27px, 8vw, 34px);
+        }
+
+        .detail {
+          margin-top: 26px;
+          font-size: 16px;
+        }
+
+        .contact-links {
+          margin-top: 38px;
+        }
+
+        .projects {
+          padding-block: 64px 96px;
+        }
+
+        h2 {
+          margin-bottom: 48px;
+        }
+
+        .project,
+        .other-projects {
+          grid-template-columns: 1fr;
+          gap: 32px;
+        }
+
+        .project {
+          padding-block: 40px 44px;
+        }
+
+        .project-copy p {
+          font-size: 16px;
+        }
+
+        .other-projects {
+          padding-top: 34px;
+        }
+
+        .other-links {
+          gap: 22px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header shell">
+      <nav class="nav" aria-label="Primary navigation">
+        <a class="brand" href="#about">Lest.</a>
+        <div class="nav-links">
+          <a href="#about">About</a>
+          <a href="#projects">Projects</a>
+          <a href="https://github.com/leesta24" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="about shell" id="about">
+        <h1>About me</h1>
+
+        <div class="about-copy">
+          <p class="intro">
+            A <strong>software engineer</strong> experienced in backend systems design, currently focused
+            on AI-native agent applications and harness engineering.
+          </p>
+          <p class="detail">
+            Previously at Microsoft and Huawei.
+          </p>
+          <nav class="contact-links" aria-label="Contact links">
+            <a href="https://github.com/leesta24" target="_blank" rel="noreferrer">GitHub</a>
+            <a href="https://x.com/juyi9612" target="_blank" rel="noreferrer">X</a>
+            <a href="mailto:juyi2407@gmail.com">Email</a>
+          </nav>
+        </div>
+      </section>
+
+      <section class="projects shell" id="projects">
+        <h2>Personal projects</h2>
+
+        <div class="project-list">
+          <article class="project">
+            <div>
+              <h3>Guace</h3>
+              <span class="project-kind">macOS application</span>
+            </div>
+            <div class="project-copy">
+              <p>
+                A local-first, AI-native knowledge workspace for macOS that connects files,
+                conversations, and agents in one private environment.
+              </p>
+              <a class="project-link" href="https://guace.app/" target="_blank" rel="noreferrer">
+                guace.app
+              </a>
+            </div>
+          </article>
+
+          <article class="project">
+            <div>
+              <h3>White Square</h3>
+              <span class="project-kind">open source experiment</span>
+            </div>
+            <div class="project-copy">
+              <p>
+                A local-first pixel plaza for snapshot-defined agents, group conversations,
+                mention routing, and separate memory for each agent.
+              </p>
+              <a
+                class="project-link"
+                href="https://github.com/leesta24/white-square"
+                target="_blank"
+                rel="noreferrer"
+              >
+                GitHub repository
+              </a>
+            </div>
+          </article>
+        </div>
+
+        <div class="other-projects">
+          <span class="other-label">Other experiments</span>
+          <div class="other-links">
+            <a class="other-link" href="https://github.com/leesta24/Squirrel" target="_blank" rel="noreferrer">
+              Squirrel
+            </a>
+            <a class="other-link" href="https://github.com/leesta24/ai-daily" target="_blank" rel="noreferrer">
+              AI Daily
+            </a>
           </div>
-        </section>
+        </div>
+      </section>
+    </main>
 
-        <section>
-          <p class="section-title">Find me</p>
-          <div class="links">
-            <a href="https://github.com/leesta24" target="_blank" rel="noopener">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-              GitHub
-            </a>
-            <a href="https://x.com/juyi9612" target="_blank" rel="noopener">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-              @juyi9612
-            </a>
-            <a href="mailto:juyi2407@gmail.com">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-              juyi2407@gmail.com
-            </a>
-          </div>
-        </section>
-      </div>
-    </div>
-  </main>
-
-  <div class="container">
-    <footer>
-      <p>&copy; 2025 Lest</p>
+    <footer class="footer shell">
+      <span>Lest / Juyi Wu</span>
+      <span>© 2026</span>
     </footer>
-  </div>
-</body>
+  </body>
 </html>
