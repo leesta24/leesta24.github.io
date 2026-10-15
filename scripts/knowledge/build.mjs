@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import MarkdownIt from 'markdown-it';
@@ -67,8 +68,8 @@ function navigation() {
   return `<a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header>`;
 }
 
-function layout({ title, description, url, content, script = false }) {
-  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="${escape(description)}"><meta name="color-scheme" content="light dark"><title>${escape(title)} | Lest</title><link rel="canonical" href="${site}${url}"><meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="article"><meta property="og:url" content="${site}${url}"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)">${script ? '<script src="/knowledge/assets/library.js" defer></script>' : ''}</head><body>${navigation()}${content}<footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>\n`;
+function layout({ title, description, url, content, version, script = false }) {
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="${escape(description)}"><meta name="color-scheme" content="light dark"><title>${escape(title)} | Lest</title><link rel="canonical" href="${site}${url}"><meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="article"><meta property="og:url" content="${site}${url}"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css?v=${version}"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)">${script ? `<script src="/knowledge/assets/library.js?v=${version}" defer></script>` : ''}</head><body>${navigation()}${content}<footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>\n`;
 }
 
 function entry(article, categories) {
@@ -77,6 +78,7 @@ function entry(article, categories) {
 }
 
 export async function build(sourceDirectory, outputDirectory) {
+  const version = createHash('sha256').update(await fs.readFile(path.join(here, 'knowledge.css'))).update(await fs.readFile(path.join(here, 'library.js'))).digest('hex').slice(0, 12);
   const source = path.resolve(sourceDirectory);
   const output = path.resolve(outputDirectory);
   // The output is replaceable generated content, never a repository or a source ancestor.
@@ -174,16 +176,41 @@ export async function build(sourceDirectory, outputDirectory) {
     const rendered = md.renderer.render(tokens, md.options, {});
     const rawUrl = '/knowledge/raw/' + doc.file.split('/').map(encodeURIComponent).join('/');
     const related = article ? articles.filter(a => a.category === article.category && a.file !== doc.file).slice(0, 3) : [];
-    const content = `<main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a>${category ? `<span aria-hidden="true">/</span><a href="${category.url}">${escape(category.title)}</a>` : ''}</nav><header class="article-header"><p class="eyebrow">${article ? '阅读笔记' : '知识库目录'}</p><h1 id="${escape(titleId)}">${escape(doc.title)}</h1><div class="article-meta">${article?.date ? `<time datetime="${article.date}">归档于 ${article.date}</time>` : ''}<a href="${rawUrl}" download>下载 Markdown ↓</a></div>${article ? `<div class="entry-tags">${article.tags.map(t => `<a href="/knowledge/?tag=${encodeURIComponent(t)}">${escape(t)}</a>`).join('')}</div>` : ''}</header><article class="prose">${rendered}</article>${related.length ? `<section class="related"><h2>同主题阅读</h2><ul>${related.map(a => `<li><a href="${a.url}">${escape(a.title)} <span aria-hidden="true">↗</span></a></li>`).join('')}</ul></section>` : ''}<a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav>${headings.map(h => `<a class="${h.level}" href="#${encodeURIComponent(h.id)}">${escape(h.text)}</a>`).join('')}</nav></details></aside></main>`;
-    pages.push({ url: doc.url, html: layout({ title: doc.title, description: article?.summary || doc.title, url: doc.url, content }), doc });
+    const content = `<main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a>${category ? `<span aria-hidden="true">/</span><a href="${category.url}">${escape(category.title)}</a>` : ''}</nav><header class="article-header"><h1 id="${escape(titleId)}">${escape(doc.title)}</h1><div class="article-meta">${article?.date ? `<time datetime="${article.date}">归档于 ${article.date}</time>` : ''}<a href="${rawUrl}" download>下载 Markdown ↓</a></div>${article ? `<div class="entry-tags">${article.tags.map(t => `<a href="/knowledge/?tag=${encodeURIComponent(t)}">${escape(t)}</a>`).join('')}</div>` : ''}</header><article class="prose">${rendered}</article>${related.length ? `<section class="related"><h2>同主题阅读</h2><ul>${related.map(a => `<li><a href="${a.url}">${escape(a.title)} <span aria-hidden="true">↗</span></a></li>`).join('')}</ul></section>` : ''}<a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav>${headings.map(h => `<a class="${h.level}" href="#${encodeURIComponent(h.id)}">${escape(h.text)}</a>`).join('')}</nav></details></aside></main>`;
+    pages.push({ url: doc.url, html: layout({ title: doc.title, description: article?.summary || doc.title, url: doc.url, content, version }), doc });
   }
 
-  const topicLinks = [...categories.values()].map(c => {
+  const topicOptions = [...categories.values()].map(c => {
     const count = articles.filter(a => a.category === c.id).length;
-    return `<a class="topic-link" href="${escape(c.url)}" data-category-filter="${escape(c.id)}"><span>${escape(c.title)}</span><span class="topic-count">${count}</span></a>`;
+    return `<label class="topic-option"><input type="checkbox" name="category" value="${escape(c.id)}" data-topic checked><span>${escape(c.title)}</span><span class="topic-count">${count}</span></label>`;
   }).join('');
-  const content = `<main id="main" class="shell"><section class="library-intro"><div><p class="eyebrow">Lest 的个人知识库</p><h1>Knowledge Base<span class="title-period">.</span></h1></div><div class="intro-copy"><p>把读过的资料，变成可以反复查阅的知识。</p><p class="muted">关于 AI、Agent 与软件工程的技术资料、阅读笔记和架构调研。</p><div class="library-stats"><span><strong>${articles.length}</strong> 篇资料</span><span><strong>${categories.size}</strong> 个主题</span></div></div></section><section class="library-layout" aria-label="知识库资料"><aside class="topics"><h2>按主题浏览</h2><nav aria-label="主题分类"><a class="topic-link active" href="/knowledge/" data-category-filter="" aria-current="true"><span>全部资料</span><span class="topic-count">${articles.length}</span></a>${topicLinks}</nav><div class="library-links"><a href="/knowledge/archive/">原始总索引 ↗</a><a href="/knowledge/sources/">信息源目录 ↗</a></div></aside><div class="library-main"><form class="search-form" role="search" action="/knowledge/" hidden><label class="sr-only" for="knowledge-search">搜索标题、标签和正文</label><input id="knowledge-search" name="q" type="search" placeholder="搜索标题、标签和正文…" autocomplete="off" aria-describedby="search-help"><button class="search-clear" type="button" hidden>清除</button></form><p id="search-help" class="search-help" hidden>全文搜索，支持中文与英文。多个关键词以空格分隔。</p><div class="list-heading"><h2 id="list-title">全部资料</h2><div class="list-tools"><button id="reset-filters" type="button" hidden>清除筛选</button><span id="result-count" role="status" aria-live="polite">${articles.length} 篇</span></div></div><div id="active-tag" class="active-tag" hidden></div><ul id="article-list" class="article-list">${articles.map(a => entry(a, categories)).join('')}</ul><div class="empty-state" id="empty-state" hidden><h3>没有找到相关资料</h3><p>试试其他关键词，或清除当前筛选。</p><button type="button" id="empty-reset">查看全部资料</button></div><p class="archive-note">内容保留归档时的阅读范围、来源与核验说明，部分资料为摘要或摘录。</p><noscript><p>已展示全部资料。点击主题索引或文章标题即可阅读。</p></noscript></div></section></main>`;
-  pages.push({ url: '/knowledge/', html: layout({ title: 'Knowledge Base', description: 'Lest 的个人知识库：AI、Agent 与软件工程的技术资料、阅读笔记和架构调研。', url: '/knowledge/', content, script: true }) });
+  const content = `<main id="main" class="shell library">
+    <h1 class="sr-only">知识库</h1>
+    <div class="library-toolbar">
+      <form class="search-form" role="search" action="/knowledge/" hidden>
+        <label class="sr-only" for="knowledge-search">搜索标题、标签和正文</label>
+        <input id="knowledge-search" name="q" type="search" placeholder="搜索文档" autocomplete="off">
+        <button class="search-clear" type="button" hidden>清除</button>
+      </form>
+      <details class="topic-filter" id="topic-filter" hidden>
+        <summary aria-label="筛选主题"><span id="topic-selection">全部主题</span><span class="dropdown-arrow" aria-hidden="true">⌄</span></summary>
+        <div class="topic-menu">
+          <label class="topic-option topic-all"><input id="select-all-topics" type="checkbox" checked><span>全选</span></label>
+          <fieldset><legend class="sr-only">选择主题</legend>${topicOptions}</fieldset>
+        </div>
+      </details>
+    </div>
+    <p id="search-error" role="status" hidden></p>
+    <div class="list-heading">
+      <nav class="library-links" aria-label="知识库目录"><a href="/knowledge/archive/">原始总索引 ↗</a><a href="/knowledge/sources/">信息源目录 ↗</a></nav>
+      <div class="list-tools"><button id="reset-filters" type="button" hidden>清除筛选</button><span id="result-count" role="status" aria-live="polite">${articles.length} 篇</span></div>
+    </div>
+    <h2 id="list-title" class="sr-only">全部资料</h2>
+    <div id="active-tag" class="active-tag" hidden></div>
+    <ul id="article-list" class="article-list">${articles.map(a => entry(a, categories)).join('')}</ul>
+    <div class="empty-state" id="empty-state" hidden><h3>没有找到相关资料</h3><button type="button" id="empty-reset">清除筛选</button></div>
+  </main>`;
+  pages.push({ url: '/knowledge/', html: layout({ title: 'Knowledge Base', description: 'Lest 的个人知识库：AI、Agent 与软件工程的技术资料、阅读笔记和架构调研。', url: '/knowledge/', content, version, script: true }) });
 
   await fs.rm(output, { recursive: true, force: true });
   await fs.mkdir(path.join(output, 'assets'), { recursive: true });
