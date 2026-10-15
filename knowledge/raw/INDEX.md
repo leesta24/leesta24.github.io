@@ -1,10 +1,4 @@
-# Lest 的个人知识库
-
-按知识主题保存技术资料、摘要与调研。维护规则见 [AGENTS.md](AGENTS.md)，信息源见 [source.md](source.md)。
-
-公开阅读：[个人主页知识库](https://leesta24.github.io/knowledge/)。本仓库知识文档推送至 `main` 后自动发布；仓库本身保持私有。
-
-当前共 28 篇归档资料；文档包含摘要、解读或部分原文，保存范围以各篇内容为准。历史文档中的数字、版本和判断属于归档时的信息；新卡片分别注明阅读范围与核验状态，阅读来源不等于复现实验。
+# 知识库索引
 
 ## 知识模块
 
@@ -53,17 +47,3 @@
 | 2026-10-01 | [Converge AI a13n Agent 框架架构分析](materials/harness/2026-10-01-a13n-agent-framework-analysis.md) | GitHub 源码调研 | Agent 框架, Pydantic AI, 开源, 企业级, CodeAct, Durable Execution | Converge AI 开源的企业级 agent 基础设施，不自造 agent loop 而构建在 Pydantic AI 2 之上，提供可嵌入运行时 + 自托管多租户服务 + Rust 沙箱，亮点是 CodeAct 受限 Python 编排与 durable execution。 |
 | 2026-09-29 | [Automating eval design and hillclimbing with Claude](materials/evaluation/2026-09-29-automating-eval-design-and-hillclimbing.md) | claude.dev | LLM 评测, Eval, Hillclimbing, Claude Code, 过拟合 | claude-api skill 的 build-eval/hillclimb 命令详解：评测设计四要素、对抗采样原则，以及用 train/test 切分防过拟合的逐轮改进流程，附降本与提性能两个实战案例。 |
 | 2026-09-29 | [Lakebase Search: State-of-the-art full text and vector search for Postgres](materials/retrieval-data/2026-09-29-lakebase-search-postgres.md) | Databricks Blog | 向量搜索, PostgreSQL, BM25, 混合搜索, AI Agent | Databricks 为 Lakebase Postgres 推出 lakebase_vector（IVF+RaBitQ 量化）与 lakebase_text（原生 BM25）扩展，实现 serverless 按量计费的混合搜索，直指 pgvector 三大痛点。 |
-
-## 收录与检索
-- 用户手动提供链接、PDF、截图或要求扫描来源后再整理，不依赖自动定时任务。
-- 先查本索引与各模块 README，再读资料原文；标题或链接重复则跳过，有实质更新则更新原文件。
-- 新资料放进对应模块，新增模块同时维护本索引与 AGENTS.md。跨主题资料只存一份，其他模块用链接引用。
-- 2026-10-14 整理：原 materials/ 下的 12 篇文档原样移入模块子目录；旧“LLM 工程实践”明确为“评测与优化”，Raft 上下文文章移入“上下文与记忆”。原路径可通过 Git 历史查找。
-
-## 最近一次人工筛选
-
-2026-10-14：按用户要求读取 #inspiration 中 2026-09-14 至 2026-10-14 的频道消息，接口两页共返回 185 条，另补读相关线程。按分享时间筛选，不要求原文也在此期间发布。新增 16 张摘要卡片（28 篇总计），a13n 已收录而跳过；未逐个打开所有纯链接、图片或视频，不能视为全部附件和线程的完整审阅。
-
-- TypeSafe 笔记仅取得标题与 Slack 原文摘录，卡片明确标部分可读。
-- Poke proactive Gist、Manus 评测微信公众号文章、Harrison Chase 原帖本次未取得正文，暂不归档；保留来源线索。
-- 普通模型发布、融资、硬件营销、缺乏技术细节的动态未单独收录。

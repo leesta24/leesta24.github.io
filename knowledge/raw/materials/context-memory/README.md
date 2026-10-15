@@ -2,7 +2,7 @@
 
 上下文构造、压缩、prompt cache、长期记忆和用户建模。
 
-[总索引](../../INDEX.md) · [信息源](../../source.md) · [维护规则](../../AGENTS.md)
+[总索引](../../INDEX.md) · [信息源](../../source.md)
 
 ## 已收录资料
 - [Constructed Initial Context — Raft 冷唤醒成本降低 60%](2026-10-06-raft-constructed-initial-context.md)

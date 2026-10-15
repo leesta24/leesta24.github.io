@@ -2,7 +2,7 @@
 
 Agent loop、Harness 接口、持久执行、会话与任务编排。框架整体分析归这里，侧重部署资源与沙箱的文章归 infrastructure。
 
-[总索引](../../INDEX.md) · [信息源](../../source.md) · [维护规则](../../AGENTS.md)
+[总索引](../../INDEX.md) · [信息源](../../source.md)
 
 ## 已收录资料
 - [Converge AI 开源 a13n Agent 框架调研分析](2026-10-01-a13n-agent-framework-analysis.md)

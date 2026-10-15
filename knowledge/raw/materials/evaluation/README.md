@@ -2,7 +2,7 @@
 
 评测集、裁判、轨迹评估、迭代优化与可观测性。
 
-[总索引](../../INDEX.md) · [信息源](../../source.md) · [维护规则](../../AGENTS.md)
+[总索引](../../INDEX.md) · [信息源](../../source.md)
 
 ## 已收录资料
 - [Automating eval design and hillclimbing with Claude](2026-09-29-automating-eval-design-and-hillclimbing.md)
