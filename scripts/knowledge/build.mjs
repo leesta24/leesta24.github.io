@@ -192,13 +192,13 @@ export async function build(sourceDirectory, outputDirectory) {
         <input id="knowledge-search" name="q" type="search" placeholder="搜索文档" autocomplete="off">
         <button class="search-clear" type="button" hidden>清除</button>
       </form>
-      <details class="topic-filter" id="topic-filter" hidden>
-        <summary aria-label="筛选主题"><span id="topic-selection">全部主题</span><span class="dropdown-arrow" aria-hidden="true">⌄</span></summary>
-        <div class="topic-menu">
-          <label class="topic-option topic-all"><input id="select-all-topics" type="checkbox" checked><span>全选</span></label>
+      <div class="topic-filter" id="topic-filter" hidden>
+        <button class="topic-trigger" id="topic-trigger" type="button" aria-expanded="false" aria-controls="topic-menu" aria-label="筛选主题"><span id="topic-selection">全部主题</span><span class="dropdown-arrow" aria-hidden="true">⌄</span></button>
+        <div class="topic-menu" id="topic-menu" hidden>
+          <div class="topic-actions"><button id="select-all-topics" type="button" aria-disabled="true">全选</button><button id="clear-topics" type="button" aria-disabled="false">清空</button></div>
           <fieldset><legend class="sr-only">选择主题</legend>${topicOptions}</fieldset>
         </div>
-      </details>
+      </div>
     </div>
     <p id="search-error" role="status" hidden></p>
     <div class="list-heading">
