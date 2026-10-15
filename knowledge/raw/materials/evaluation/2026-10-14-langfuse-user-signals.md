@@ -1,0 +1,26 @@
+# Langfuse：如何把用户信号用于 Agent 评估
+
+- 作者 / 发布方：Langfuse / Lotte Verheyden
+- 原文：[链接](https://langfuse.com/academy/monitoring/capturing-signals) · [链接](https://x.com/lotte_verheyden/status/2100284020831752570)
+- Slack 发现依据：[分享/讨论](https://today-ai.slack.com/archives/C0A37E94PHD/p1789583239867229)
+- 发布日期：未知
+- 归档日期：2026-10-14（Asia/Shanghai）
+- 标签：用户反馈, 评测, Proactive
+- 保存形式：摘要与解读，不保存原文全文
+- 阅读 / 核验状态：已阅读所引页面的相关正文；未运行代码或复现实验
+
+## 一句话摘要
+
+把用户行为作为发现问题的入口，而非直接替代任务质量指标。
+
+## 主要要点
+
+- 区分显式评分、行为、对话与结果信号；正常修改需求与纠正错误应分开。
+- 负向信号定位具体 trace，正向信号看趋势，没有反馈视为缺失数据。
+- 点赞或点击不必然意味着任务成功，优化指标应贴近产品目的。
+
+## 证据与局限
+
+X 帖无法读取；通过作者与主题搜索定位官方 Academy 正文，并与 Slack 线程摘录交叉匹配。对主动推送可同时观察完成率、关闭与打扰反馈，但单一退订指标同样有偏差。
+
+[模块索引](README.md) · [总索引](../../INDEX.md)

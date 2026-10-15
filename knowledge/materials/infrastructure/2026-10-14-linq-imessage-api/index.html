@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="通过 REST API 与事件回调，把 Agent 放进既有消息渠道。"><meta name="color-scheme" content="light dark"><title>Linq：面向 Personal Agent 的 iMessage 接入 | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/infrastructure/2026-10-14-linq-imessage-api/"><meta property="og:title" content="Linq：面向 Personal Agent 的 iMessage 接入"><meta property="og:description" content="通过 REST API 与事件回调，把 Agent 放进既有消息渠道。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/infrastructure/2026-10-14-linq-imessage-api/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/infrastructure/">Agent 基础设施</a></nav><header class="article-header"><p class="eyebrow">阅读笔记</p><h1 id="linq面向-personal-agent-的-imessage-接入">Linq：面向 Personal Agent 的 iMessage 接入</h1><div class="article-meta"><time datetime="2026-10-14">归档于 2026-10-14</time><a href="/knowledge/raw/materials/infrastructure/2026-10-14-linq-imessage-api.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=iMessage">iMessage</a><a href="/knowledge/?tag=%E6%B6%88%E6%81%AF%E6%8E%A5%E5%85%A5">消息接入</a><a href="/knowledge/?tag=Webhook">Webhook</a><a href="/knowledge/?tag=%E7%BE%A4%E8%81%8A">群聊</a></div></header><article class="prose"><ul>
+<li>作者 / 发布方：Linq</li>
+<li>原文：<a href="https://linqapp.com/imessage-api" rel="noreferrer">链接</a></li>
+<li>Slack 发现依据：<a href="https://today-ai.slack.com/archives/C0A37E94PHD/p1790582595076059" rel="noreferrer">分享/讨论</a></li>
+<li>发布日期：持续更新页面，发布日期未知</li>
+<li>归档日期：2026-10-14（Asia/Shanghai）</li>
+<li>标签：iMessage, 消息接入, Webhook, 群聊</li>
+<li>保存形式：摘要与解读，不保存原文全文</li>
+<li>阅读 / 核验状态：已阅读所引页面的相关正文；未运行代码或复现实验</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>通过 REST API 与事件回调，把 Agent 放进既有消息渠道。</p>
+<h2 id="主要要点">主要要点</h2>
+<ul>
+<li>支持 iMessage、RCS/SMS fallback、群聊、富媒体、回执与正在输入等交互。</li>
+<li>Webhooks 将会话事件送回应用，适合消息驱动的助理入口。</li>
+<li>它提供第三方接入基础设施；不能称作 Apple 官方公开 API。</li>
+</ul>
+<h2 id="证据与局限">证据与局限</h2>
+<p>本次读取产品页及 FAQ；未调用 API，SLA、延迟及计费宣传未独立实测或合同核验。</p>
+<p><a href="/knowledge/materials/infrastructure/">模块索引</a> · <a href="/knowledge/archive/">总索引</a></p>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/infrastructure/2026-10-14-kernel-browser-infrastructure/">Kernel：浏览器会话、认证与可观测性基础设施 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/infrastructure/2026-10-14-netlify-microvm-edge-functions/">Netlify：从 V8 isolates 到 Firecracker MicroVM <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/infrastructure/2026-10-14-personal-agent-protocol/">Personal Agent Protocol：个人 Agent 的服务授权入口 <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E4%B8%BB%E8%A6%81%E8%A6%81%E7%82%B9">主要要点</a><a class="h2" href="#%E8%AF%81%E6%8D%AE%E4%B8%8E%E5%B1%80%E9%99%90">证据与局限</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>
