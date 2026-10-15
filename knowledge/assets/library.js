@@ -3,52 +3,67 @@
   const form = document.querySelector('.search-form');
   const list = document.querySelector('#article-list');
   const entries = [...list.children];
-  const topics = [...document.querySelectorAll('[data-category-filter]')];
+  const topicFilter = document.querySelector('#topic-filter');
+  const topicSummary = topicFilter.querySelector('summary');
+  const topics = [...topicFilter.querySelectorAll('[data-topic]')];
+  const allTopics = topics.map(topic => topic.value);
+  const selectAll = document.querySelector('#select-all-topics');
+  const selection = document.querySelector('#topic-selection');
   const title = document.querySelector('#list-title');
   const count = document.querySelector('#result-count');
   const reset = document.querySelector('#reset-filters');
   const clear = document.querySelector('.search-clear');
   const activeTag = document.querySelector('#active-tag');
   let documents = null;
-  const state = { q: '', category: '', tag: '' };
+  const state = { q: '', categories: new Set(allTopics), tag: '' };
   const normalize = value => value.normalize('NFKC').toLocaleLowerCase();
 
   function readURL() {
     const params = new URLSearchParams(location.search);
-    for (const key of Object.keys(state)) state[key] = params.get(key) || '';
+    state.q = params.get('q') || '';
+    state.tag = params.get('tag') || '';
+    state.categories = params.has('category')
+      ? new Set(params.getAll('category').filter(value => allTopics.includes(value)))
+      : new Set(allTopics);
     input.value = state.q;
   }
 
   function updateURL() {
     const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(state)) if (value) params.set(key, value);
+    if (state.q) params.set('q', state.q);
+    if (state.categories.size !== allTopics.length) {
+      if (!state.categories.size) params.append('category', '');
+      else for (const category of allTopics) if (state.categories.has(category)) params.append('category', category);
+    }
+    if (state.tag) params.set('tag', state.tag);
     history.replaceState(null, '', location.pathname + (params.size ? '?' + params : ''));
   }
 
   function filter() {
     const terms = normalize(state.q).trim().split(/\s+/).filter(Boolean);
     let visible = 0;
-    const selectedTopic = topics.find(t => t.dataset.categoryFilter === state.category);
     for (const item of entries) {
       const article = documents?.get(item.dataset.url);
       const haystack = normalize(article ? [article.title, article.summary, article.source, article.tags.join(' '), article.text].join(' ') : item.textContent);
       const tags = JSON.parse(item.dataset.tags);
-      const matches = (!state.category || item.dataset.category === state.category)
+      const matches = state.categories.has(item.dataset.category)
         && (!state.tag || tags.some(tag => normalize(tag) === normalize(state.tag)))
         && terms.every(term => haystack.includes(term));
       item.hidden = !matches;
       if (matches) visible++;
     }
-    for (const topic of topics) {
-      const selected = topic.dataset.categoryFilter === state.category;
-      topic.classList.toggle('active', selected);
-      if (selected) topic.setAttribute('aria-current', 'true');
-      else topic.removeAttribute('aria-current');
-    }
-    title.textContent = state.category ? selectedTopic?.firstElementChild.textContent || '主题资料' : '全部资料';
+    const selected = topics.filter(topic => state.categories.has(topic.value));
+    for (const topic of topics) topic.checked = state.categories.has(topic.value);
+    const isAll = selected.length === allTopics.length;
+    selectAll.checked = isAll;
+    selectAll.indeterminate = selected.length > 0 && !isAll;
+    selection.textContent = isAll ? '全部主题' : !selected.length ? '未选择主题'
+      : selected.length === 1 ? selected[0].nextElementSibling.textContent : `${selected.length} 个主题`;
+    topicSummary.setAttribute('aria-label', `筛选主题：${selection.textContent}`);
+    title.textContent = isAll ? '全部资料' : '筛选结果';
     count.textContent = `${visible} 篇`;
     clear.hidden = !state.q;
-    reset.hidden = !state.q && !state.category && !state.tag;
+    reset.hidden = !state.q && isAll && !state.tag;
     activeTag.hidden = !state.tag;
     activeTag.textContent = state.tag ? `标签：${state.tag}` : '';
     document.querySelector('#empty-state').hidden = visible > 0;
@@ -61,7 +76,9 @@
   }
 
   function resetAll() {
-    for (const key of Object.keys(state)) state[key] = '';
+    state.q = '';
+    state.tag = '';
+    state.categories = new Set(allTopics);
     input.value = '';
     updateURL();
     filter();
@@ -69,11 +86,24 @@
 
   readURL();
   filter();
-  for (const topic of topics) topic.addEventListener('click', event => {
-    // Native navigation remains available for new tabs and without JavaScript.
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    event.preventDefault();
-    change('category', topic.dataset.categoryFilter);
+  form.hidden = false;
+  topicFilter.hidden = false;
+  selectAll.addEventListener('change', () => change('categories', new Set(selectAll.checked ? allTopics : [])));
+  for (const topic of topics) topic.addEventListener('change', () => {
+    change('categories', new Set(topics.filter(option => option.checked).map(option => option.value)));
+  });
+  document.addEventListener('pointerdown', event => {
+    if (topicFilter.open && !topicFilter.contains(event.target)) topicFilter.open = false;
+  });
+  topicFilter.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && topicFilter.open) {
+      event.preventDefault();
+      topicFilter.open = false;
+      topicSummary.focus();
+    }
+  });
+  topicFilter.addEventListener('focusout', event => {
+    if (!topicFilter.contains(event.relatedTarget)) topicFilter.open = false;
   });
   list.addEventListener('click', event => {
     const link = event.target.closest('[data-tag]');
@@ -93,15 +123,11 @@
     return response.json();
   }).then(data => {
     documents = new Map(data.articles.map(article => [article.url, article]));
-    form.hidden = false;
-    document.querySelector('#search-help').hidden = false;
     filter();
   }).catch(() => {
-    // Article navigation and metadata filtering still work if the index is unavailable.
-    form.hidden = false;
-    const help = document.querySelector('#search-help');
-    help.hidden = false;
-    help.textContent = '全文索引暂时无法加载，当前可搜索标题、摘要和标签。刷新页面可重试。';
+    const error = document.querySelector('#search-error');
+    error.hidden = false;
+    error.textContent = '全文搜索暂不可用，当前仅搜索标题、摘要和标签。';
     filter();
   });
 })();
