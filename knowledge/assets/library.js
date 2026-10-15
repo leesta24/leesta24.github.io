@@ -4,10 +4,12 @@
   const list = document.querySelector('#article-list');
   const entries = [...list.children];
   const topicFilter = document.querySelector('#topic-filter');
-  const topicSummary = topicFilter.querySelector('summary');
+  const topicTrigger = document.querySelector('#topic-trigger');
+  const topicMenu = document.querySelector('#topic-menu');
   const topics = [...topicFilter.querySelectorAll('[data-topic]')];
   const allTopics = topics.map(topic => topic.value);
   const selectAll = document.querySelector('#select-all-topics');
+  const clearTopics = document.querySelector('#clear-topics');
   const selection = document.querySelector('#topic-selection');
   const title = document.querySelector('#list-title');
   const count = document.querySelector('#result-count');
@@ -17,6 +19,12 @@
   let documents = null;
   const state = { q: '', categories: new Set(allTopics), tag: '' };
   const normalize = value => value.normalize('NFKC').toLocaleLowerCase();
+  let pendingRender = false;
+
+  function setMenuOpen(open) {
+    topicMenu.hidden = !open;
+    topicTrigger.setAttribute('aria-expanded', String(open));
+  }
 
   function readURL() {
     const params = new URLSearchParams(location.search);
@@ -49,17 +57,17 @@
       const matches = state.categories.has(item.dataset.category)
         && (!state.tag || tags.some(tag => normalize(tag) === normalize(state.tag)))
         && terms.every(term => haystack.includes(term));
-      item.hidden = !matches;
+      if (item.hidden === matches) item.hidden = !matches;
       if (matches) visible++;
     }
     const selected = topics.filter(topic => state.categories.has(topic.value));
     for (const topic of topics) topic.checked = state.categories.has(topic.value);
     const isAll = selected.length === allTopics.length;
-    selectAll.checked = isAll;
-    selectAll.indeterminate = selected.length > 0 && !isAll;
+    selectAll.setAttribute('aria-disabled', String(isAll));
+    clearTopics.setAttribute('aria-disabled', String(!selected.length));
     selection.textContent = isAll ? '全部主题' : !selected.length ? '未选择主题'
       : selected.length === 1 ? selected[0].nextElementSibling.textContent : `${selected.length} 个主题`;
-    topicSummary.setAttribute('aria-label', `筛选主题：${selection.textContent}`);
+    topicTrigger.setAttribute('aria-label', `筛选主题：${selection.textContent}`);
     title.textContent = isAll ? '全部资料' : '筛选结果';
     count.textContent = `${visible} 篇`;
     clear.hidden = !state.q;
@@ -71,8 +79,14 @@
 
   function change(key, value) {
     state[key] = value;
-    updateURL();
-    filter();
+    // Finish native input/focus handling before changing the surrounding UI.
+    if (pendingRender) return;
+    pendingRender = true;
+    requestAnimationFrame(() => {
+      pendingRender = false;
+      updateURL();
+      filter();
+    });
   }
 
   function resetAll() {
@@ -88,22 +102,30 @@
   filter();
   form.hidden = false;
   topicFilter.hidden = false;
-  selectAll.addEventListener('change', () => change('categories', new Set(selectAll.checked ? allTopics : [])));
+  topicTrigger.addEventListener('click', () => setMenuOpen(topicMenu.hidden));
+  selectAll.addEventListener('click', () => {
+    if (state.categories.size !== allTopics.length) change('categories', new Set(allTopics));
+  });
+  clearTopics.addEventListener('click', () => {
+    if (state.categories.size) change('categories', new Set());
+  });
   for (const topic of topics) topic.addEventListener('change', () => {
     change('categories', new Set(topics.filter(option => option.checked).map(option => option.value)));
   });
   document.addEventListener('pointerdown', event => {
-    if (topicFilter.open && !topicFilter.contains(event.target)) topicFilter.open = false;
+    if (!topicMenu.hidden && !topicFilter.contains(event.target)) setMenuOpen(false);
   });
   topicFilter.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && topicFilter.open) {
+    if (event.key === 'Escape' && !topicMenu.hidden) {
       event.preventDefault();
-      topicFilter.open = false;
-      topicSummary.focus();
+      setMenuOpen(false);
+      topicTrigger.focus();
     }
   });
-  topicFilter.addEventListener('focusout', event => {
-    if (!topicFilter.contains(event.relatedTarget)) topicFilter.open = false;
+  topicFilter.addEventListener('focusout', () => {
+    requestAnimationFrame(() => {
+      if (!topicFilter.contains(document.activeElement)) setMenuOpen(false);
+    });
   });
   list.addEventListener('click', event => {
     const link = event.target.closest('[data-tag]');
