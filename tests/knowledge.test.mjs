@@ -12,8 +12,8 @@ async function fixture(t) {
   const output = path.join(root, 'knowledge');
   await fs.mkdir(path.join(source, 'materials/topic/assets'), { recursive: true });
   const write = (file, text) => fs.writeFile(path.join(source, file), text);
-  await write('INDEX.md', '# Index\n\n| 日期 | 标题 | 来源 | 标签 | 摘要 |\n|---|---|---|---|---|\n| 2026-10-15 | [Article](materials/topic/first.md) | Source | 中文, Agent | Summary |');
-  await write('source.md', '# Sources\n\n[Article](materials/topic/first.md)');
+  await write('INDEX.md', '# Index\n\n## 全部资料\n\n| 日期 | 标题 | 来源 | 标签 | 摘要 |\n|---|---|---|---|---|\n| 2026-10-15 | [Article](materials/topic/first.md) | Source | 中文, Agent | Summary |');
+  await write('source.md', '# Sources\n\n## 长期发布源与作者\n\n[Article](materials/topic/first.md)');
   await write('AGENTS.md', 'PRIVATE MAINTENANCE');
   await write('sync.sh', 'PRIVATE SCRIPT');
   await write('materials/topic/README.md', '# Topic\n\nDescription\n\n[First](first.md)');
@@ -69,4 +69,20 @@ test('refuses source overwrite and traversal links', async t => {
   await assert.rejects(build(source, source), /Output must be/);
   await write('materials/topic/next.md', '# Bad\n[Escape](../../../secret.md)');
   await assert.rejects(build(source, output), /Unsafe content path/);
+});
+
+test('public directories and their downloads omit maintenance and task records', async t => {
+  const { source, output } = await fixture(t);
+  const sourceFile = path.join(source, 'source.md');
+  const indexFile = path.join(source, 'INDEX.md');
+  await fs.appendFile(sourceFile, '\n## 维护规则\n\nINTERNAL_RULE [Private](AGENTS.md)\n\n## 本次访问限制\n\nINTERNAL_ACCESS_LOG\n\n## 补充参考\n\n[Reference](https://example.com/reference)\n');
+  await fs.appendFile(indexFile, '\n## 最近一次人工筛选\n\nINTERNAL_TASK_REPORT\n');
+  await build(source, output);
+  for (const file of ['sources/index.html', 'archive/index.html', 'raw/source.md', 'raw/INDEX.md']) {
+    const text = await fs.readFile(path.join(output, file), 'utf8');
+    assert.doesNotMatch(text, /INTERNAL_|AGENTS\.md|本次访问限制|最近一次人工筛选|维护规则/);
+  }
+  assert.match(await fs.readFile(path.join(output, 'sources/index.html'), 'utf8'), /https:\/\/example.com\/reference/);
+  assert.match(await fs.readFile(sourceFile, 'utf8'), /INTERNAL_RULE/);
+  assert.match(await fs.readFile(indexFile, 'utf8'), /INTERNAL_TASK_REPORT/);
 });

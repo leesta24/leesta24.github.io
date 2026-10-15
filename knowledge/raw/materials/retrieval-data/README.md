@@ -2,7 +2,7 @@
 
 向量搜索、全文检索、混合检索、RAG 与数据库。
 
-[总索引](../../INDEX.md) · [信息源](../../source.md) · [维护规则](../../AGENTS.md)
+[总索引](../../INDEX.md) · [信息源](../../source.md)
 
 ## 已收录资料
 - [Lakebase Search: State-of-the-art full text and vector search for Postgres](2026-09-29-lakebase-search-postgres.md)

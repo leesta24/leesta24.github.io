@@ -2,7 +2,7 @@
 
 沙箱、部署、多租户、资源调度、MCP 网关与工具接入设施。
 
-[总索引](../../INDEX.md) · [信息源](../../source.md) · [维护规则](../../AGENTS.md)
+[总索引](../../INDEX.md) · [信息源](../../source.md)
 
 ## 已收录资料
 - [Sandbox Agent Substrate — CNCF Sandbox 申请（Issue #523）](2026-10-01-agent-substrate-cncf-sandbox-523.md)

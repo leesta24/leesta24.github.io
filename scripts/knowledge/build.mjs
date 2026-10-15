@@ -32,6 +32,24 @@ function route(file) {
   return '/knowledge/' + file.replace(/(?:^|\/)README\.md$/, '/').replace(/\.md$/, '/').replace(/^\//, '');
 }
 
+function publicDirectoryMarkdown(markdown, file) {
+  const allowed = file === 'source.md' ? new Set(['长期发布源与作者', '项目观察清单', '补充参考'])
+    : file === 'INDEX.md' ? new Set(['知识模块', '全部资料']) : null;
+  if (!allowed) return markdown;
+  const lines = markdown.split('\n');
+  const tokens = md.parse(markdown, {});
+  const sections = tokens.flatMap((token, i) => token.type === 'heading_open' && ['h1', 'h2'].includes(token.tag)
+    ? [{ tag: token.tag, name: plain(tokens[i + 1].children).replace(/（.*）$/, ''), start: token.map[0], headingEnd: token.map[1] }] : []);
+  const chunks = [];
+  for (let i = 0; i < sections.length; i++) {
+    const section = sections[i];
+    if (section.tag === 'h1' && !chunks.length) chunks.push(lines.slice(section.start, section.headingEnd).join('\n'));
+    if (section.tag === 'h2' && allowed.has(section.name)) chunks.push(lines.slice(section.start, sections[i + 1]?.start ?? lines.length).join('\n').trim());
+  }
+  if (chunks.length < 2) throw new Error(`No public directory sections in ${file}`);
+  return chunks.join('\n\n') + '\n';
+}
+
 function indexMetadata(markdown) {
   const metadata = new Map();
   let row;
@@ -96,7 +114,7 @@ export async function build(sourceDirectory, outputDirectory) {
     const tokens = md.parse(markdown, {});
     const heading = tokens.findIndex(t => t.type === 'heading_open' && t.tag === 'h1');
     const title = heading < 0 ? path.basename(file, '.md') : plain(tokens[heading + 1].children);
-    documents.set(file, { file, markdown, title, tokens, url: route(file) });
+    documents.set(file, { file, markdown, publicMarkdown: publicDirectoryMarkdown(markdown, file), title, tokens, url: route(file) });
   }
   const metadata = indexMetadata(documents.get('INDEX.md').markdown);
   const categories = new Map();
@@ -128,14 +146,13 @@ export async function build(sourceDirectory, outputDirectory) {
     const suffix = (match[2] || '') + (match[3] || '');
     if (documents.has(target)) return documents.get(target).url + suffix;
     if (attachmentSet.has(target)) return '/knowledge/' + target.split('/').map(encodeURIComponent).join('/') + suffix;
-    if (target === 'AGENTS.md') return 'https://github.com/leesta24/knowledge-base/blob/main/AGENTS.md';
     throw new Error(`Missing or unpublished local link in ${file}: ${href}`);
   }
 
   // Validate and render everything before replacing the last successful build.
   const pages = [];
   for (const doc of documents.values()) {
-    const tokens = md.parse(doc.markdown, {});
+    const tokens = md.parse(doc.publicMarkdown, {});
     const headings = [];
     const usedIds = new Set(['main']);
     let seenTitle = false;
@@ -158,7 +175,6 @@ export async function build(sourceDirectory, outputDirectory) {
         if (child.type === 'link_open') {
           child.attrSet('href', rewrite(child.attrGet('href'), doc.file));
           if (/^https?:/.test(child.attrGet('href'))) child.attrSet('rel', 'noreferrer');
-          if (child.attrGet('href').endsWith('/AGENTS.md')) child.attrSet('title', '维护规则位于私有源仓库');
         }
         if (child.type === 'image') {
           child.attrSet('src', rewrite(child.attrGet('src'), doc.file));
@@ -221,7 +237,7 @@ export async function build(sourceDirectory, outputDirectory) {
     if (page.doc) {
       const raw = path.join(output, 'raw', page.doc.file);
       await fs.mkdir(path.dirname(raw), { recursive: true });
-      await fs.writeFile(raw, page.doc.markdown);
+      await fs.writeFile(raw, page.doc.publicMarkdown);
     }
   }
   for (const file of attachments) {
