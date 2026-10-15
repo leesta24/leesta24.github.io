@@ -1,0 +1,236 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Converge AI 开源的企业级 agent 基础设施，不自造 agent loop 而构建在 Pydantic AI 2 之上，提供可嵌入运行时 + 自托管多租户服务 + Rust 沙箱，亮点是 CodeAct 受限 Python 编排与 durable execution。"><meta name="color-scheme" content="light dark"><title>Converge AI 开源 a13n Agent 框架调研分析 | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/harness/2026-10-01-a13n-agent-framework-analysis/"><meta property="og:title" content="Converge AI 开源 a13n Agent 框架调研分析"><meta property="og:description" content="Converge AI 开源的企业级 agent 基础设施，不自造 agent loop 而构建在 Pydantic AI 2 之上，提供可嵌入运行时 + 自托管多租户服务 + Rust 沙箱，亮点是 CodeAct 受限 Python 编排与 durable execution。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/harness/2026-10-01-a13n-agent-framework-analysis/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/harness/">Agent 框架与运行时</a></nav><header class="article-header"><p class="eyebrow">阅读笔记</p><h1 id="converge-ai-开源-a13n-agent-框架调研分析">Converge AI 开源 a13n Agent 框架调研分析</h1><div class="article-meta"><time datetime="2026-10-01">归档于 2026-10-01</time><a href="/knowledge/raw/materials/harness/2026-10-01-a13n-agent-framework-analysis.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=Agent%20%E6%A1%86%E6%9E%B6">Agent 框架</a><a href="/knowledge/?tag=Pydantic%20AI">Pydantic AI</a><a href="/knowledge/?tag=%E5%BC%80%E6%BA%90">开源</a><a href="/knowledge/?tag=%E4%BC%81%E4%B8%9A%E7%BA%A7">企业级</a><a href="/knowledge/?tag=CodeAct">CodeAct</a><a href="/knowledge/?tag=Durable%20Execution">Durable Execution</a></div></header><article class="prose"><ul>
+<li><strong>来源</strong>: GitHub 仓库源码 + 官方文档/spec（实地 clone 检查）</li>
+<li><strong>仓库</strong>: <a href="https://github.com/converge-ai-labs/agent-foundation" rel="noreferrer">https://github.com/converge-ai-labs/agent-foundation</a></li>
+<li><strong>文档站</strong>: <a href="https://a13n-docs.converge.ai/" rel="noreferrer">https://a13n-docs.converge.ai/</a></li>
+<li><strong>归档日期</strong>: 2026-10-01</li>
+<li><strong>标签</strong>: Agent 框架, 开源, Pydantic AI, 企业级, 沙箱, Durable Execution, CodeAct</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>a13n（Agent Foundation）是 Converge AI 开源的企业级 AI Agent 基础设施（Apache 2.0）：它<strong>不自造 agent loop，而是直接构建在 Pydantic AI 2 之上</strong>，提供可嵌入的运行时（Harness）+ 可自托管的多租户服务（Service）+ 沙箱环境（envd），解决的是 agent 从 demo 到生产落地的 hosting 问题——多租户、权限、记忆、沙箱隔离、可观测、可续跑、成本计量。</p>
+<hr>
+<h2 id="1-项目简介与背景">1. 项目简介与背景</h2>
+<ul>
+<li><strong>一句话</strong>: 开源、自托管的企业 AI Agent 地基：托管 agent、记忆、沙箱、computer use、durable execution 的库 + 平台。</li>
+<li><strong>背景</strong>: Converge AI 是做 Proxy（浏览器操作 agent，2024 年 12 月上线）的英国 AI agent 公司，以&quot;让 agent 在动态界面中完成复杂人类任务&quot;见长。a13n 是他们把内部 agent 基础设施开源的产物，2026 年 8 月 18 日建仓，目前处于活跃的 0.x 开发阶段（API 仍可能变）。</li>
+<li><strong>仓库现状</strong>（2026-10-01 实测）: ★120 / fork 10 / commit 752 / release 128，Apache 2.0。Topics: <code>agent-framework</code> <code>pydantic-ai</code> <code>multi-agent-systems</code> <code>observability</code>。</li>
+</ul>
+<hr>
+<h2 id="2-整体架构">2. 整体架构</h2>
+<h3 id="21-三层结构">2.1 三层结构</h3>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│ 产品 / 内部服务（你的应用）                                    │
+│  API 与体验 / 认证与业务策略（Host 拥有）                       │
+├─────────────────────────────────────────────────────────────┤
+│ a13n-service（可选：多租户托管运行时）                          │
+│  control（HTTP API /api/v1, thread stream）                    │
+│  worker（claim run 并执行）                                     │
+│  PostgreSQL（唯一真相源） + Redis（仅加速）                      │
+├─────────────────────────────────────────────────────────────┤
+│ a13n-harness（核心：可嵌入 Python SDK）                         │
+│  AgentDefinition → HarnessBuilder → ExecutableAgent           │
+│  RunBindings + HarnessState → 逻辑 Run → 结果                   │
+│  └─ 底层：Pydantic AI 2（原生 agent loop，不 fork）              │
+├─────────────────────────────────────────────────────────────┤
+│ a13n-envd（Rust 沙箱守护进程，EIP 协议）                        │
+│  Docker / E2B / Daytona / Modal / Runloop 等执行环境            │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>三种使用方式</strong>：直接在进程里嵌入 Harness（你的应用拥有持久化、凭证、恢复策略）；跑 Harness UI（终端/浏览器 playground，个人或小团队交互式使用）；部署 Service（多租户托管，Console 管理）。Service 的 worker 里<strong>嵌入的是同一个 Harness</strong>，没有第二套 agent 执行引擎。</p>
+<h3 id="22-核心概念harness">2.2 核心概念（Harness）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>概念</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AgentDefinition</code></td>
+<td>不可变的、code-first 的构建输入：AgentSpec（原生 Pydantic AI spec）+ 输出契约 + 模型 + Capabilities + 插件 + 子 agent 拓扑</td>
+</tr>
+<tr>
+<td><code>HarnessBuilder.build()</code></td>
+<td>同步构建，产出可复用的 <code>ExecutableAgent</code>；构建过程不触碰模型、环境和外部 I/O</td>
+</tr>
+<tr>
+<td><code>ExecutableAgent</code></td>
+<td>可复用的已构建 agent，无 <code>close()</code>，不拥有任何 run 资源</td>
+</tr>
+<tr>
+<td><code>RunBindings</code></td>
+<td>每次 run 新鲜构造的&quot;当前可信输入&quot;：身份、环境运行时、模型解析器、调用期能力、策略</td>
+</tr>
+<tr>
+<td><code>HarnessState</code></td>
+<td>可移植的续跑状态：thread_id、Pydantic 消息历史、版本化 Capability 命名空间；<strong>不含凭证、身份、live 资源</strong>（State restores data, not authority）</td>
+</tr>
+<tr>
+<td>Thread / Run / ModelAttempt</td>
+<td>Thread = 一条独立推进的消息历史；Run = 一次逻辑执行（一个 run_id）；ModelAttempt = 内部一次 <code>Agent.run_stream_events()</code> 调用（一次 Run 可含多次 attempt，用于模型中断恢复）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="23-agent-loop-与一次-run-的数据流">2.3 Agent loop 与一次 Run 的数据流</h3>
+<p><strong>关键设计：Harness 不创建第二套 agent loop。</strong> spec 原话：&quot;adds one reusable build boundary and one canonical logical-run boundary around Pydantic AI; it does not create a second Agent loop or a serialized Agent-definition language.&quot; 推理循环、工具调度、消息编解码全部复用 Pydantic AI 的原生实现，Harness 只做 hosting 侧的组合。</p>
+<p>一次 <code>run()</code> 的流程（来自 spec 01）：</p>
+<pre><code>1. 进入新鲜的 Environment adapter，原子发布初始挂载集
+2. 可选 input_factory 生成语义输入
+3. 用 fresh bindings + 拷贝的 Capability 状态创建 AgentContext
+4. 绑定 run plugins，冻结 BoundPluginContext
+5. 插件链懒启动
+6. 跑一次 ModelAttempt（唯一 model-attempt ID）
+7. 模型可恢复中断 → 归一化历史，在连续失败预算内重试（Environment facade 保持活跃）
+8. 产出/挂起/取消/失败/硬停 → 构建唯一 terminal candidate
+9. 展开可信结果中间件
+10. 建立 terminal fence，关闭所有 run 资源后交付结果
+</code></pre>
+<p><code>stream()</code> 是懒加载、单入口、单消费者的事件流；每个事件带 <code>thread_id</code> + <code>run_id</code> + 单调递增 sequence。还支持<strong>中途 steer</strong>：<code>stream.steer(input)</code> 通过 Pydantic AI 的 <code>priority=&quot;asap&quot;</code> 队列向正在运行的 agent 注入用户输入。</p>
+<p><strong>Run 结果四种终态</strong>：<code>completed</code>（带校验过的业务输出）、<code>suspended</code>（deferred tool/approval 等待外部输入，可 resume）、<code>failed</code>（安全归一化的失败）、<code>cancelled</code>。</p>
+<h3 id="24-capability-模型功能组合机制">2.4 Capability 模型（功能组合机制）</h3>
+<p>功能组合不靠第二套注册表/调度器，而是直接用 <strong>Pydantic AI 的 <code>AbstractCapability</code></strong>。Harness 提供一等公民 Capabilities：context、codeact、delegation、documents、input、interaction、lifecycle、memory、skills、steering、subagents、tool_proxy、tool_review、video_url、web、working_state 等。</p>
+<p>四个可信来源：<code>AgentSpec.capabilities</code>（声明式）→ <code>AgentDefinition</code> → Harness 插件贡献 → <code>RunBindings.capabilities</code>（调用期策略/MCP）。显式原则：<strong>Capability 的存在本身不授权外部工作</strong>，跨管理边界的工具仍要走 fresh run policy 和 provider enforcement。</p>
+<h3 id="25-servicedurable-execution">2.5 Service：durable execution</h3>
+<p>Service 把&quot;输入&quot;变成&quot;持久化 run&quot;：调用方把输入追加到 thread inbox → accept 选出一条创建 run（冻结 agent revision、pins、mounts）→ worker 以租约 claim → 嵌入 Harness 执行 → 在安全边界提交 checkpoint（消费掉的输入 + 可续跑状态一起落盘）→ seal 成不可变 facts（PostgreSQL）→ webhook/thread stream/用量记录对外交付。</p>
+<p>设计原则很&quot;基础设施味&quot;：</p>
+<ul>
+<li><strong>PostgreSQL 拍板</strong>：run 归属、输入消费、凭证、审计全在 PG；Redis 只做 claim 唤醒、临时流、限流——丢了只降级不决策。</li>
+<li><strong>短事务</strong>：绝不在 DB 事务里持有模型调用、工具调用、流。</li>
+<li><strong>显式不确定性</strong>：可能已生效但结果未知的外部操作记为 unknown，绝不盲目重试。</li>
+<li>三进程角色（control / worker / 迁移任务），一个镜像通过角色选择运行。</li>
+</ul>
+<h3 id="26-environments沙箱执行">2.6 Environments：沙箱执行</h3>
+<ul>
+<li><code>a13n-envd</code> 是 Rust 写的设备守护进程，实现 Environment Interaction Protocol (EIP 0.1)，管文件/命令/后台进程/stdin/端口观察。</li>
+<li>Harness 侧是 provider 中立的 <code>BoundEnvironment</code> facade：一次 run 一个挂载命名空间，run 结束非破坏性关闭。</li>
+<li>支持 Docker 本地沙箱和 E2B、Daytona、Modal、Runloop、Sprites、Vercel 等云沙箱；动态环境能力（<code>DynamicEnvironmentCapability</code>）按需把操作暴露给模型。</li>
+</ul>
+<h3 id="27-上下文记忆可观测">2.7 上下文、记忆、可观测</h3>
+<ul>
+<li><strong>上下文管理</strong>：<code>filters/</code>（cold_start/content/image/integrity）——cold-start filter 默认空闲 1 小时后自动裁剪已消费工具结果中的超大字符串（保留 pending 结果、用户输入、thinking），拿缓存前缀换更小的冷请求；支持 compaction。</li>
+<li><strong>记忆</strong>：文件记忆（<code>DirectoryFileStore</code>，条件写防并发覆盖）+ 记录记忆（mem0 集成或自定义 RecordStore）；工作记忆用 working_state（任务/笔记，单会话）。</li>
+<li><strong>可观测</strong>：<code>a13n-stream-protocol</code> 把 Harness 事件映射为 <strong>AG-UI 1.0</strong> 标准事件（刚从旧版迁移）；OpenTelemetry instrumentation；用量/计费（genai-prices 做价格快照）。</li>
+<li><strong>模型层</strong>：14 种 provider 类型（含云 API、网关、本地 Ollama）；<strong>Sign in with ChatGPT</strong>（用 ChatGPT 订阅额度而不用 API key）；默认开启 <code>SelfHealingModelCapability</code>（对 provider-history 不兼容做一次性精确修复）；请求级亲和性（prompt cache key、session affinity header）。</li>
+</ul>
+<hr>
+<h2 id="3-关键设计决策与技术亮点">3. 关键设计决策与技术亮点</h2>
+<h3 id="31-最大胆的决策不-fork-pydantic-ai">3.1 最大胆的决策：不 fork Pydantic AI</h3>
+<p>spec 用整整一章（01）讲这个 trade-off：直接依赖 Pydantic AI 2 换来生态兼容和上游修复，代价是必须跟随上游 public API 变化。Harness 明确<strong>不 fork、不复刻</strong>：Agent 图、Model 接口、Capability 生命周期、Toolset 组合、消息编解码、deferred tool 模型、usage 累加器——全部复用。甚至 spec 里写&quot;与 Pydantic 合作，把通用能力推回上游抽象，而不是长出平行 schema&quot;。</p>
+<p>这意味着：a13n 不是&quot;又一个 agent 框架&quot;，而是 <strong>Pydantic AI 的 hosting 层</strong>。</p>
+<h3 id="32-codeact受限-python-编排">3.2 CodeAct：受限 Python 编排</h3>
+<p>技术亮点之一。<code>CodeActCapability</code> 让 agent 用<strong>受限 Python</strong>（基于 <code>pydantic-monty</code>——Pydantic 的沙箱 Python 方言运行时，代码里注明改编自 pydantic-ai-harness）来组合工具调用，而不是一次次 JSON tool call：</p>
+<ul>
+<li>工具 owner 必须用 <code>CodeActPolicyToolset</code> <strong>显式发布</strong>哪些工具允许被 CodeAct 调用（白名单制，不从元数据推断）；</li>
+<li>生成的 typed host 函数在沙箱里跑（无文件/网络/进程/环境/凭证访问），嵌套调用走<strong>原生 Pydantic AI ToolManager</strong>，所以 policy、事件、用量、deferred 行为完全一致；</li>
+<li><code>ToolProxy</code> 解决大工具集问题：runner 只拿到 search/call 两个函数，按需发现 schema；</li>
+<li>另有 <code>store</code>/<code>load</code>/<code>forget</code> 键值状态（默认 256 条/10MB），但<strong>不进 HarnessState</strong>——跨 run 续存要靠 host 保存 state。</li>
+</ul>
+<p>对应 CodeAct 论文（2024）的思想：代码即行动，复杂控制流（循环、分支、数据处理）用代码表达比多轮 tool call 更高效。</p>
+<h3 id="33-内联子-agent-vs-异步子-agent-的刻意边界">3.3 内联子 agent vs 异步子 agent 的刻意边界</h3>
+<ul>
+<li><strong>内联</strong>：声明式有限无环子 agent 拓扑，父进程内同步执行，借用父的 Environment（不重新进入），子状态可续跑（<code>resume_subagent</code>）。</li>
+<li><strong>异步</strong>：子 agent 可能活得比父 run 长时，Host 自备 <code>SubagentOperator</code> 实现 delegate/info/wait/steer/cancel/resume；<strong>Harness 刻意不提供</strong>进程内调度器、默认存储、回调、跨进程取消路由——&quot;把分布式语义留给 Host&quot;。</li>
+</ul>
+<h3 id="34-human-in-the-loop-是一等公民">3.4 Human-in-the-loop 是一等公民</h3>
+<p>复用 Pydantic AI 原生 deferred tool 模型：工具调用可挂起（<code>suspended</code> 结果带 <code>deferred</code> 批次），外部给反馈后用同一状态 resume。<code>stream()</code> 上的 <code>steer()</code> 允许运行中插话。Service 层把 approval wait 做成了 durable 的。</p>
+<h3 id="35-与主流框架对比">3.5 与主流框架对比</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>a13n</th>
+<th>LangGraph</th>
+<th>CrewAI / AutoGen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>定位</td>
+<td>Pydantic AI 的 hosting/企业落地层</td>
+<td>图编排框架</td>
+<td>多 agent 协作框架</td>
+</tr>
+<tr>
+<td>编排原语</td>
+<td>单 agent loop + Capability 组合；复杂流程用 CodeAct/子 agent</td>
+<td>显式节点/边状态机，checkpoint 内置</td>
+<td>角色、群聊、任务分工抽象</td>
+</tr>
+<tr>
+<td>状态/续跑</td>
+<td><code>HarnessState</code> 可移植续跑，但<strong>持久化是 Host 的事</strong>；Service 提供 durable run</td>
+<td>内置 checkpointer（Postgres/Redis）</td>
+<td>各自的记忆/状态机制</td>
+</tr>
+<tr>
+<td>多 agent</td>
+<td>声明式内联子 agent + Host 托管异步子 agent，无角色抽象</td>
+<td>子图/ Send API</td>
+<td>一等公民（Crew、GroupChat）</td>
+</tr>
+<tr>
+<td>工具/沙箱</td>
+<td>Environment Provider 抽象 + Rust envd 沙箱守护进程 + MCP 原生</td>
+<td>工具函数，沙箱靠外部</td>
+<td>工具函数</td>
+</tr>
+<tr>
+<td>模型层</td>
+<td>14 provider + ChatGPT 订阅登录 + self-healing</td>
+<td>各家 SDK 拼装</td>
+<td>各家 SDK 拼装</td>
+</tr>
+<tr>
+<td>部署形态</td>
+<td>库 / 本地 UI / Docker Compose 多租户 Service</td>
+<td>库（LangGraph Platform 另收费）</td>
+<td>库为主</td>
+</tr>
+<tr>
+<td>哲学</td>
+<td>&quot;不重造轮子&quot;：loop 复用上游，Harness 只解决 hosting</td>
+<td>&quot;图即程序&quot;</td>
+<td>&quot;拟人协作&quot;</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>一句话差异</strong>：LangGraph 回答&quot;怎么编排步骤&quot;，CrewAI/AutoGen 回答&quot;怎么让多个 agent 协作&quot;，a13n 回答&quot;agent 跑在生产环境里需要的 surrounding infrastructure 是什么&quot;——三者其实可以叠加（a13n 的 agent 里也可以跑 LangGraph 子流程，概念上不冲突）。</p>
+<hr>
+<h2 id="4-适用场景与局限">4. 适用场景与局限</h2>
+<p><strong>适合</strong>：</p>
+<ul>
+<li>要<strong>自托管</strong>、面向企业的 agent 平台（多租户、权限、审计、用量计量）；</li>
+<li>已经在用 Pydantic AI，想补上 hosting 能力（沙箱、记忆、可观测、续跑）而不换框架；</li>
+<li>需要 computer use / 代码执行隔离（envd 沙箱）；</li>
+<li>需要 durable run：长任务可中断、可审批、可恢复；</li>
+<li>想快速搭一个带 Console 的 agent 服务做内部工具（Docker Compose 一键起）。</li>
+</ul>
+<p><strong>局限 / 注意</strong>：</p>
+<ul>
+<li>0.x 阶段，API 在 minor 版本间可能 breaking change；</li>
+<li>强绑定 Pydantic AI 生态：上游 API 变了 Harness 就得跟；不用 Pydantic AI 的团队迁移成本高；</li>
+<li>早期项目（★120），社区、周边生态、生产案例都还薄；</li>
+<li>没有内置图工作流引擎——复杂 DAG 编排得自己用 CodeAct/子 agent 拼，或叠 LangGraph；</li>
+<li>异步子 agent 的调度/存储/回调要自己实现 <code>SubagentOperator</code>，Harness 只给接口；</li>
+<li>Python 为主（Rust 只负责 envd），重度 Go/Java 栈团队不顺手；</li>
+<li>文档是中英双语且 spec 极其详细（<code>spec/</code> 下 20+ 份契约文档），学习曲线陡，但这是优点——spec-driven，改实现先改契约。</li>
+</ul>
+<hr>
+<h2 id="5-仓库信息">5. 仓库信息</h2>
+<ul>
+<li><strong>仓库</strong>: <a href="https://github.com/converge-ai-labs/agent-foundation" rel="noreferrer">https://github.com/converge-ai-labs/agent-foundation</a></li>
+<li><strong>文档</strong>: <a href="https://a13n-docs.converge.ai/" rel="noreferrer">https://a13n-docs.converge.ai/</a></li>
+<li><strong>Star</strong>: 120（2026-10-01）| Fork: 10 | Commit: 752 | Release: 128</li>
+<li><strong>建仓</strong>: 2026-08-18</li>
+<li><strong>License</strong>: Apache 2.0（README 明确标 &quot;Commercial Friendly&quot;）</li>
+<li><strong>语言</strong>: Python 3.13（主）+ Rust（envd 沙箱 daemon）+ TypeScript（Console/Harness UI 前端）</li>
+<li><strong>核心依赖</strong>: <code>pydantic-ai&gt;=2.51,&lt;3</code>、<code>pydantic-monty&gt;=1.0,&lt;2</code>（CodeAct 沙箱）、AG-UI 1.0（流协议）</li>
+</ul>
+<hr>
+<h2 id="6-备注调研方法与可信度">6. 备注（调研方法与可信度）</h2>
+<ul>
+<li>本报告基于 2026-10-01 实际 <code>git clone</code>（commit <code>9369f69</code>）的源码、<code>docs/</code> 用户文档与 <code>spec/</code> 架构契约交叉验证，非转述二手资料。</li>
+<li>Converge AI 背景：Proxy 浏览器 agent 的公司；网上有 Salesforce 收购 Convergence.AI 的报道（2026 年初），但与本仓库的组织关系未在仓库内明确说明，报告中未做断言。</li>
+<li>Star 数等仓库元数据取自调研当日 GitHub 页面，会随时间变化。</li>
+</ul>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/harness/2026-10-14-personal-agent-reference-architectures/">Raft、OpenMuse、nanoMuse：个人 Agent 架构参考 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/harness/2026-10-07-pi-durable-vs-opencode/">Pi Durable vs. OpenCode: An Architectural Comparison <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/harness/2026-10-01-oar-open-agent-runtime/">OAR (Open Agent Runtime): programming interface for all agent harnesses <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#1-%E9%A1%B9%E7%9B%AE%E7%AE%80%E4%BB%8B%E4%B8%8E%E8%83%8C%E6%99%AF">1. 项目简介与背景</a><a class="h2" href="#2-%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84">2. 整体架构</a><a class="h3" href="#21-%E4%B8%89%E5%B1%82%E7%BB%93%E6%9E%84">2.1 三层结构</a><a class="h3" href="#22-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5harness">2.2 核心概念（Harness）</a><a class="h3" href="#23-agent-loop-%E4%B8%8E%E4%B8%80%E6%AC%A1-run-%E7%9A%84%E6%95%B0%E6%8D%AE%E6%B5%81">2.3 Agent loop 与一次 Run 的数据流</a><a class="h3" href="#24-capability-%E6%A8%A1%E5%9E%8B%E5%8A%9F%E8%83%BD%E7%BB%84%E5%90%88%E6%9C%BA%E5%88%B6">2.4 Capability 模型（功能组合机制）</a><a class="h3" href="#25-servicedurable-execution">2.5 Service：durable execution</a><a class="h3" href="#26-environments%E6%B2%99%E7%AE%B1%E6%89%A7%E8%A1%8C">2.6 Environments：沙箱执行</a><a class="h3" href="#27-%E4%B8%8A%E4%B8%8B%E6%96%87%E8%AE%B0%E5%BF%86%E5%8F%AF%E8%A7%82%E6%B5%8B">2.7 上下文、记忆、可观测</a><a class="h2" href="#3-%E5%85%B3%E9%94%AE%E8%AE%BE%E8%AE%A1%E5%86%B3%E7%AD%96%E4%B8%8E%E6%8A%80%E6%9C%AF%E4%BA%AE%E7%82%B9">3. 关键设计决策与技术亮点</a><a class="h3" href="#31-%E6%9C%80%E5%A4%A7%E8%83%86%E7%9A%84%E5%86%B3%E7%AD%96%E4%B8%8D-fork-pydantic-ai">3.1 最大胆的决策：不 fork Pydantic AI</a><a class="h3" href="#32-codeact%E5%8F%97%E9%99%90-python-%E7%BC%96%E6%8E%92">3.2 CodeAct：受限 Python 编排</a><a class="h3" href="#33-%E5%86%85%E8%81%94%E5%AD%90-agent-vs-%E5%BC%82%E6%AD%A5%E5%AD%90-agent-%E7%9A%84%E5%88%BB%E6%84%8F%E8%BE%B9%E7%95%8C">3.3 内联子 agent vs 异步子 agent 的刻意边界</a><a class="h3" href="#34-human-in-the-loop-%E6%98%AF%E4%B8%80%E7%AD%89%E5%85%AC%E6%B0%91">3.4 Human-in-the-loop 是一等公民</a><a class="h3" href="#35-%E4%B8%8E%E4%B8%BB%E6%B5%81%E6%A1%86%E6%9E%B6%E5%AF%B9%E6%AF%94">3.5 与主流框架对比</a><a class="h2" href="#4-%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%E4%B8%8E%E5%B1%80%E9%99%90">4. 适用场景与局限</a><a class="h2" href="#5-%E4%BB%93%E5%BA%93%E4%BF%A1%E6%81%AF">5. 仓库信息</a><a class="h2" href="#6-%E5%A4%87%E6%B3%A8%E8%B0%83%E7%A0%94%E6%96%B9%E6%B3%95%E4%B8%8E%E5%8F%AF%E4%BF%A1%E5%BA%A6">6. 备注（调研方法与可信度）</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>

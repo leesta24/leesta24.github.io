@@ -1,0 +1,21 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="将浏览器执行、登录状态与运行证据作为 Agent 的独立基础设施。"><meta name="color-scheme" content="light dark"><title>Kernel：浏览器会话、认证与可观测性基础设施 | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/infrastructure/2026-10-14-kernel-browser-infrastructure/"><meta property="og:title" content="Kernel：浏览器会话、认证与可观测性基础设施"><meta property="og:description" content="将浏览器执行、登录状态与运行证据作为 Agent 的独立基础设施。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/infrastructure/2026-10-14-kernel-browser-infrastructure/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css?v=d86f8a63c5cd"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/infrastructure/">Agent 基础设施</a></nav><header class="article-header"><h1 id="kernel浏览器会话认证与可观测性基础设施">Kernel：浏览器会话、认证与可观测性基础设施</h1><div class="article-meta"><time datetime="2026-10-14">归档于 2026-10-14</time><a href="/knowledge/raw/materials/infrastructure/2026-10-14-kernel-browser-infrastructure.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=%E6%B5%8F%E8%A7%88%E5%99%A8">浏览器</a><a href="/knowledge/?tag=%E4%BC%9A%E8%AF%9D">会话</a><a href="/knowledge/?tag=%E8%AE%A4%E8%AF%81">认证</a><a href="/knowledge/?tag=%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7">可观测性</a></div></header><article class="prose"><ul>
+<li>作者 / 发布方：Kernel</li>
+<li>原文：<a href="https://www.kernel.sh/" rel="noreferrer">链接</a></li>
+<li>发布日期：持续更新页面，发布日期未知</li>
+<li>归档日期：2026-10-14（Asia/Shanghai）</li>
+<li>标签：浏览器, 会话, 认证, 可观测性</li>
+<li>保存形式：摘要与解读，不保存原文全文</li>
+<li>阅读 / 核验状态：已阅读所引页面的相关正文；未运行代码或复现实验</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>将浏览器执行、登录状态与运行证据作为 Agent 的独立基础设施。</p>
+<h2 id="主要要点">主要要点</h2>
+<ul>
+<li>提供隔离 Chromium、CDP/WebDriver BiDi、Playwright 和截图控制入口。</li>
+<li>Profiles 保存浏览器状态，Managed Auth 管理经用户授权的登录，会话支持实时查看与录像。</li>
+<li>提供浏览器池、按需实例和遥测，适合比较自建浏览器 worker 的工程成本。</li>
+</ul>
+<h2 id="证据与局限">证据与局限</h2>
+<p>本次读取官网能力说明，未验证登录覆盖、性能或收费；未采用可能已经变化的跑分和会话上限。</p>
+<p><a href="/knowledge/materials/infrastructure/">模块索引</a> · <a href="/knowledge/archive/">总索引</a></p>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/infrastructure/2026-10-14-linq-imessage-api/">Linq：面向 Personal Agent 的 iMessage 接入 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/infrastructure/2026-10-14-netlify-microvm-edge-functions/">Netlify：从 V8 isolates 到 Firecracker MicroVM <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/infrastructure/2026-10-14-personal-agent-protocol/">Personal Agent Protocol：个人 Agent 的服务授权入口 <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E4%B8%BB%E8%A6%81%E8%A6%81%E7%82%B9">主要要点</a><a class="h2" href="#%E8%AF%81%E6%8D%AE%E4%B8%8E%E5%B1%80%E9%99%90">证据与局限</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>

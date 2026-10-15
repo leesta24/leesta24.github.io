@@ -1,0 +1,60 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="MiniMax 开源：在自有基础设施上跑 agent，对外暴露与 OpenAI 相同的 Agents API；每个 Session 可选 Codex / Claude Code / MiniMax Code harness + 自选模型 + 可插拔沙箱，附 Web 控制台与 durable execution。"><meta name="color-scheme" content="light dark"><title>OpenAgentCore — Open-source, self-hosted implementation of the OpenAI Agents API | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/harness/2026-10-01-openagentcore/"><meta property="og:title" content="OpenAgentCore — Open-source, self-hosted implementation of the OpenAI Agents API"><meta property="og:description" content="MiniMax 开源：在自有基础设施上跑 agent，对外暴露与 OpenAI 相同的 Agents API；每个 Session 可选 Codex / Claude Code / MiniMax Code harness + 自选模型 + 可插拔沙箱，附 Web 控制台与 durable execution。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/harness/2026-10-01-openagentcore/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/harness/">Agent 框架与运行时</a></nav><header class="article-header"><p class="eyebrow">阅读笔记</p><h1 id="openagentcore--open-source-self-hosted-implementation-of-the-openai-agents-api">OpenAgentCore — Open-source, self-hosted implementation of the OpenAI Agents API</h1><div class="article-meta"><time datetime="2026-10-01">归档于 2026-10-01</time><a href="/knowledge/raw/materials/harness/2026-10-01-openagentcore.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=Agent%20%E6%A1%86%E6%9E%B6">Agent 框架</a><a href="/knowledge/?tag=OpenAI%20Agents%20API">OpenAI Agents API</a><a href="/knowledge/?tag=%E8%87%AA%E6%89%98%E7%AE%A1">自托管</a><a href="/knowledge/?tag=%E6%B2%99%E7%AE%B1">沙箱</a><a href="/knowledge/?tag=MIT">MIT</a></div></header><article class="prose"><ul>
+<li><strong>来源</strong>: GitHub 仓库（MiniMax-AI/OpenAgentCore）</li>
+<li><strong>链接</strong>: <a href="https://github.com/MiniMax-AI/OpenAgentCore" rel="noreferrer">https://github.com/MiniMax-AI/OpenAgentCore</a></li>
+<li><strong>归档日期</strong>: 2026-10-01</li>
+<li><strong>标签</strong>: Agent 框架, 开源, OpenAI Agents API, 自托管, 沙箱, MIT</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>MiniMax 开源的 OpenAgentCore：在自己的基础设施上跑 AI agent，对外暴露与 OpenAI 完全相同的 Agents API（/v1），每个 Session 可选原生 harness（Codex / Claude Code / MiniMax Code）+ 自选模型供应商 + 可插拔沙箱；附 Web 管理控制台与 durable execution 状态。</p>
+<h2 id="要点">要点</h2>
+<ul>
+<li><strong>定位</strong>: &quot;One core. Many agents.&quot; —— 开源、自托管的 OpenAI Agents API 实现；官方 OpenAI SDK 或纯 HTTP 直接指向自建实例即可，无需学新客户端。</li>
+<li><strong>三选自由</strong>: 选 agent（每个 Session 跑一个原生 harness：Codex、Claude Code 或 MiniMax Code）+ 选模型供应商 + 选机器（托管沙箱 Docker/microsandbox/E2B，或自己的 Linux/macOS/Windows）。</li>
+<li><strong>可插拔</strong>: 沙箱、harness、模型供应商都通过 defined protocol 接入，任一部分可独立替换。</li>
+<li><strong>两套 API</strong>: Agents API（<code>/v1</code>，给应用用，协议与 OpenAI Agents API 一致）+ Core API（<code>/core/v1</code>，给运维用，经 Web 控制台）。</li>
+<li><strong>架构</strong>: Core 持有 durable execution state；Runtime 在 Environment 里跑选定的 harness；各连接都是明确定义的协议。</li>
+<li><strong>安装</strong>: Linux amd64 + Docker + Python 3.9，一行 install.sh；装完在 Web 控制台配置域名/HTTPS、设默认模型、发 Project API key、加执行容量（node / E2B / 自有机器）。</li>
+<li><strong>技术栈</strong>: Go workspace + pnpm monorepo（packages/ + apps/ + services/ + internal/）；contracts/agents-api 目录放 API 契约；deploy/ 放部署；有完整文档站（mintlify，docs.json）与中英文 README。</li>
+<li><strong>仓库元数据</strong>（2026-10-01）: star 76，fork 5，commit 646，release 2，MIT，建仓 2026-09-21（很新）。Topics: agent-runtime, ai-agents, claude-code, codex, coding-agent, mcp, openai-agents-api, sandbox, self-hosted。</li>
+</ul>
+<h2 id="readme-原文">README 原文</h2>
+<h2 id="openagentcore">OpenAgentCore</h2>
+<p>An open-source, self-hosted implementation of the OpenAI Agents API with multiple native harnesses.</p>
+<h2 id="what-it-is">What it is</h2>
+<p>OpenAgentCore runs AI agents on your own infrastructure behind the OpenAI Agents API.</p>
+<ul>
+<li><strong>Same API as OpenAI.</strong> Point the official OpenAI SDK, or plain HTTP, at your installation. No new client to learn.</li>
+<li><strong>Your choice of agent.</strong> Each Session runs a native harness: Codex, Claude Code or MiniMax Code, with the model provider you configure.</li>
+<li><strong>Your choice of machine.</strong> Agents work in a managed sandbox (Docker, microsandbox or E2B), or on your own Linux, macOS or Windows machine.</li>
+<li><strong>Every part is replaceable.</strong> Sandboxes, harnesses and model providers plug in through defined protocols.</li>
+</ul>
+<h2 id="how-it-fits-together">How it fits together</h2>
+<p>Applications and operators use these Core APIs:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>API</th>
+<th>Path</th>
+<th>Used by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Agents API</strong></td>
+<td><code>/v1</code></td>
+<td>Your applications. Same protocol as OpenAI's Agents API</td>
+</tr>
+<tr>
+<td><strong>Core API</strong></td>
+<td><code>/core/v1</code></td>
+<td>Operators, through Web</td>
+</tr>
+</tbody>
+</table></div>
+<p>Core keeps durable execution state. The Runtime runs the chosen harness inside the Environment. Each connection is a defined protocol, so any part can be replaced on its own.</p>
+<h2 id="install">Install</h2>
+<p>On a Linux amd64 host with Docker and Python 3.9+:</p>
+<pre><code>curl -fsSL https://github.com/MiniMax-AI/OpenAgentCore/releases/latest/download/install.sh | bash
+</code></pre>
+<p>Then: sign in to Web (admin console) with the installer-created Core key, configure domain and HTTPS; set a default model and issue a Project API key; add execution capacity (a node, E2B, or your own machine); run your first Session with the OpenAI SDK.</p>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/harness/2026-10-14-personal-agent-reference-architectures/">Raft、OpenMuse、nanoMuse：个人 Agent 架构参考 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/harness/2026-10-07-pi-durable-vs-opencode/">Pi Durable vs. OpenCode: An Architectural Comparison <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/harness/2026-10-01-a13n-agent-framework-analysis/">Converge AI a13n Agent 框架架构分析 <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E8%A6%81%E7%82%B9">要点</a><a class="h2" href="#readme-%E5%8E%9F%E6%96%87">README 原文</a><a class="h2" href="#openagentcore">OpenAgentCore</a><a class="h2" href="#what-it-is">What it is</a><a class="h2" href="#how-it-fits-together">How it fits together</a><a class="h2" href="#install">Install</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>

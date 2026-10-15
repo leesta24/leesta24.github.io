@@ -1,0 +1,21 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="从缓存依赖重新审视小模型路由、工具 schema 和通用 compaction 的取舍。 仅有摘录，全文未读取。"><meta name="color-scheme" content="light dark"><title>TypeSafe coding agent 思考：KV cache、工具发现与上下文重建（摘录） | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/context-memory/2026-10-14-typesafe-context-design-excerpts/"><meta property="og:title" content="TypeSafe coding agent 思考：KV cache、工具发现与上下文重建（摘录）"><meta property="og:description" content="从缓存依赖重新审视小模型路由、工具 schema 和通用 compaction 的取舍。 仅有摘录，全文未读取。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/context-memory/2026-10-14-typesafe-context-design-excerpts/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css?v=d86f8a63c5cd"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/context-memory/">上下文与记忆</a></nav><header class="article-header"><h1 id="typesafe-coding-agent-思考kv-cache工具发现与上下文重建摘录">TypeSafe coding agent 思考：KV cache、工具发现与上下文重建（摘录）</h1><div class="article-meta"><time datetime="2026-10-14">归档于 2026-10-14</time><a href="/knowledge/raw/materials/context-memory/2026-10-14-typesafe-context-design-excerpts.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=%E4%B8%8A%E4%B8%8B%E6%96%87">上下文</a><a href="/knowledge/?tag=KV%20cache">KV cache</a><a href="/knowledge/?tag=%E5%B7%A5%E5%85%B7%E5%8F%91%E7%8E%B0">工具发现</a><a href="/knowledge/?tag=%E8%B7%AF%E7%94%B1">路由</a></div></header><article class="prose"><ul>
+<li>作者 / 发布方：作者身份未独立确认</li>
+<li>原文：<a href="https://docs.google.com/document/d/1G61uUB0FifUnmmrPzFQojZ3KpczYKmXGpgEXDJ2l_Zg/edit" rel="noreferrer">链接</a></li>
+<li>发布日期：未知</li>
+<li>归档日期：2026-10-14（Asia/Shanghai）</li>
+<li>标签：上下文, KV cache, 工具发现, 路由</li>
+<li>保存形式：摘要与解读，不保存原文全文</li>
+<li>阅读 / 核验状态：部分可读：仅核对现有摘录，原文全文待读</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>从缓存依赖重新审视小模型路由、工具 schema 和通用 compaction 的取舍。</p>
+<h2 id="主要要点">主要要点</h2>
+<ul>
+<li>线程摘录提出：切到小模型再切回大模型可能因重新处理上下文而更贵。</li>
+<li>预先放入所有工具定义会占用上下文；可用简短能力描述和按需完整 schema 分层发现。</li>
+<li>统一压缩状态假定未来任务需要同一份信息；按当前任务构造上下文可能更有针对性。</li>
+</ul>
+<h2 id="证据与局限">证据与局限</h2>
+<p>Google Docs 只返回标题，未取得正文；以上仅归纳 现有原文摘录，属于设计观点，不是已验证性能结论。</p>
+<p><a href="/knowledge/materials/context-memory/">模块索引</a> · <a href="/knowledge/archive/">总索引</a></p>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/context-memory/2026-10-14-muse-memory-unofficial-archive/">Muse 记忆与后台整理：非官方档案阅读 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/context-memory/2026-10-06-raft-constructed-initial-context/">Constructed Initial Context（Raft 冷唤醒成本降低 60%） <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E4%B8%BB%E8%A6%81%E8%A6%81%E7%82%B9">主要要点</a><a class="h2" href="#%E8%AF%81%E6%8D%AE%E4%B8%8E%E5%B1%80%E9%99%90">证据与局限</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>

@@ -1,0 +1,179 @@
+# Automating eval design and hillclimbing with Claude
+
+- **来源**: claude.dev 博客
+- **链接**: https://claude.dev/blog/automating-eval-design-and-hillclimbing/
+- **归档日期**: 2026-09-29
+- **标签**: LLM 评测, Eval, Hillclimbing, Claude Code, Prompt 工程, 过拟合
+
+## 一句话摘要
+
+claude.dev 官方博客：介绍 claude-api skill 的 `/claude-api build-eval` 与 `/claude-api hillclimb` 命令，给出评测设计的四要素（贴近生产、强模型+更多思考表现更好、头部有可超越空间、低运行方差）、对抗采样原则，以及 hillclimbing 防过拟合的方法（train/test 切分、失败内容不贴进 prompt、答案结构上隔离）。
+
+## 要点
+
+### 评测设计的四要素
+1. **评测任务贴近生产**：任务分布要代表实际关心的场景，而非因为"好生成/好评分"才选。
+2. **强模型 + 更多思考应表现更好**：否则通常是任务模糊或评分器校准有问题。
+3. **头部有"可超越空间"**：最强模型 + 最高 effort 仍应明显低于 100%，否则无法判断改动效果；但差距不能来自不可能/模糊任务（所有轮次都失败的任务是典型信号）。好任务 = 两个领域专家会给出同样 verdict，且评分器检查的所有内容都在任务陈述里。
+4. **低运行方差**：方差常来自模糊任务、评分器对相同输出给出不同 verdict，或配置/环境污染（上一轮残留文件、git 历史把答案递给了 agent）。
+
+### 对抗采样
+模型能力是锯齿状的。挑"当前模型会失败"的 case，等于只在该模型能力曲线的谷底采样，测出来的是该模型的失败指纹，而非对应用真正难的任务。应挑人类判断为难的 case（能说出"为什么难"），加上来自生产流量、bug 报告、工单的真实失败案例；但用户流量也可能偏简单（用户只试他们预期能 work 的），不要盲信。
+
+### /claude-api build-eval 流程
+1. **设计样例**：按优先级采样——生产 transcript（先问留存和敏感数据）→ bug 报告/支持工单 → 5-10 个手写 case → 从代码库合成；合成数据锚定在你给的真实样例上；生成预览页展示全部输入，等你确认。
+2. **验证评分器**：选"最便宜且适配"的评分器——输出空间受限用程序化验证（精确匹配、固定标签、JSON schema、测试通过）；开放输出用 LLM-as-judge（rubric 写成可检查的 claims，而非 1-5 分；有 baseline 时做盲测二选一；judge 模型不能是被测模型）。Claude 先评几个样例，让你确认打分是否一致。评完告知评测集规模（cases × repeats × model）和预估耗时，跑 baseline，输出分数带置信区间，附每 case 的完整 transcript 和一个静态结果页（纯静态文件，不联网）。
+3. **诊断检查**：同一输出跑两次评分器看 verdict 是否稳定（grader 稳定性）；检查超时、API 错误、截断答案等基础设施噪声；baseline ≥95% 则警告——hillclimb 目标应转向降成本/延迟而非提质量。
+
+### Hillclimbing 适用条件
+- **迭代便宜**：改 prompt/skill 文本便宜易回滚；改 agent harness 代码贵，慎用。
+- **归因明确**：分数变化能归因到被改的面（如 skill 触发率直接耦合到 skill 描述）。
+- **目标明确**：别对着饱和的评测做开放式"提性能"；成本是个普适的好目标（评测饱和了也能降本保性能）。
+
+### 过拟合
+评测分布很少等于生产分布，hillclimb 容易往 harness 里加只对评测有效的东西（如评测需要 OCR 就给应用加 OCR 工具，评测涨分但生产无收益）。三种对策：
+- **切分 train/test**：hillclimber 只能看 train，test 从不暴露；train 涨、test 平 = 过拟合信号。
+- **绝不把失败内容贴进 prompt**：读失败 transcript 可以，但不能把失败内容粘进 prompt。
+- **答案在结构上够不到模型**：防止 reward hack（模型直接找到评测答案）。
+
+### /claude-api hillclimb 流程
+可改的面：system prompt、skill/指令文件、tool 描述、模型选择/effort/API 参数、harness 代码。开始前先问优化目标（提性能，或保性能降成本），然后随机切分 train/test；成本目标会看 prompt caching、prompt 与模型的兼容性审计、模型/effort 选择。第一轮前检查评测噪声（纯靠运气能波动多少分）是否小于你关心的最小改进幅度，否则建议加 repeats/cases。每轮：只读上一轮 train transcript，提一个 patch；要求改动效应能超出噪声（根因修复而非改措辞）；跑评测——train 涨 test 平则怀疑过拟合并回滚；任一回归则回滚；两者都涨才保留。连续 2-3 轮停滞时，对剩余失败按根因归类（这一步只归类不改），揪出模糊 case、harness 错误、运行方差；只把合法失败纳入后续轮次。结束时代码停在 test 集上对目标最优的版本，报告 test 相对 baseline 的结果带置信区间；提升在噪声内则明确说"不建议合并"。
+
+### 两个实战案例
+1. **降本 hillclimb**（内部客服 benchmark，44 工单，30 搜 14 留）：Opus 4.8 高 effort 起点 74.4% 准确率、4.6¢/工单 → 审计 prompt 去掉强制 tool-call 仪式等 → Opus 5.5 低 effort 87.8%、1.9¢ → Sonnet 5 低 effort 88.9%、1¢ → 加路由规则和退款上限交叉引用，98.9% 同成本；14 张 held-out 工单：90.5% vs 原始 78.6%，成本约五分之一。
+2. **提性能 hillclimb**（claude-api skill 自身，用文档构建评测）：66% 起点 → 补 8 个缺失特性的章节到 74% → 修 C#/Java 类型表到 77% → 反思步骤发现 skill 内容有但 Claude 写的是训练记忆里的旧 API 形状（如固定 token budget 的 extended thinking，新版 API 在新 Opus 上已拒绝），加"旧形式→新形式"对照表并置顶 → 80% → 修模糊任务和与文档矛盾的 grader → ~88%。
+
+## 原文
+
+Evaluations provide a signal on how your app or skill is performing on specific tasks. But designing evaluations, and improving performance on them without fooling yourself, is hard. We've added guidance for both to the claude-api skill.
+
+With the skill, you can run `/claude-api build-eval` to build an evaluation inside your codebase, and run `/claude-api hillclimb` to improve your application against it, one change at a time, with a held-out set of examples to catch overfitting.
+
+In this article, we highlight the principles of good eval design and hillclimbing first, then show how Claude Code with the `claude-api` skill applies those principles. We'll close by showing a few examples of these commands.
+
+## EVAL DESIGN
+
+Well designed evaluations have a few common elements (Figure 1):
+
+1. **Eval tasks mirror production.** Sample tasks that you care about in "production," or the setting in which the capability or application you are testing will be used. Sometimes tasks are picked because they are easy to generate or they are easy to grade. But it's important to ensure that the task distribution represents what you *actually* care about.
+
+2. **Performance improves with stronger models and more thinking**. More capable models and higher effort levels typically should perform better on an evaluation. If they don't, ambiguous tasks or a miscalibrated grader often are hobbling performance.
+
+3. **There is "passable" headroom at the frontier**. The most capable model at the highest effort should be well below 100% on the evaluation, otherwise you can't reliably judge how changes impact performance. Importantly, the gap should not be explained by impossible or ambiguous tasks: a common tell is that a task fails every evaluation run, regardless of the number of replicates. A good task is one where two domain experts would reach the same verdict and everything the grader checks is stated in the task.
+
+4. **Low run-to-run variance**. High variance is often due to poorly designed, ambiguous tasks or a grader that produces different verdicts on identical output. Variance can also hide in the configuration. For example, effort may not be applied consistently. Also, the environment can affect the results of the evaluation: leftover state from an earlier trial (a file, a git history) can hand the agent the answer.
+
+### Adversarial sampling
+
+Model capability is jagged. If you pick cases because today's model fails them, you are sampling the valleys of one model's capability surface (Figure 2). The evaluation can end up measuring that model's failure fingerprint rather than what is intrinsically hard or valuable for your application to do.
+
+Pick hard cases because a human judged them hard: a useful test is to be able to say why a task is hard before you include it. Include cases that are specific failures in your application derived from production traffic, bug reports, or tickets. However, don't blindly trust user traffic: users sometimes try what they expect to work, so a task distribution drawn strictly from user traffic may skew easy.
+
+## /CLAUDE-API BUILD-EVAL
+
+The `build-eval` command in the claude-api skill turns these principles into a guided workflow. When you run `/claude-api build-eval` in Claude Code, Claude interviews you, builds the eval inside your codebase, and pauses for approval at specific points.
+
+### Designing examples
+
+Claude helps you sample inputs to build evaluations in this order:
+
+1. Production transcripts, after asking about retention and sensitive data.
+2. Bug reports and support tickets.
+3. Five to ten cases you write by hand.
+4. Cases synthesized from your codebase.
+
+The skill prioritizes production traffic, but it can also generate synthetic data anchored in a few real examples that you provide. The skill instructs Claude to generate a simple page that shows you every input and waits until you confirm them.
+
+### Validating the grader
+
+After the inputs, Claude proposes the cheapest grader that fits your application's output:
+
+- **Programmatic verification**: If the output possibilities are constrained, it uses a code based check (exact match, a label from a fixed set, JSON that matches a schema, tests that pass).
+- **LLM-as-judge**: It will default to this type of check if the output space is open-ended, with many valid answers but clear quality criteria. In this case, a second model reads the input, the output and a rubric written as checkable claims (not a 1-to-5 scale), and returns a score with its reasoning. If you have a baseline to compare against, the judge instead reads both inputs in random order, without being told which is the baseline, and picks the better one. You pick the judge model, and it should not be the model you are testing.
+
+Claude grades a handful of cases and asks whether you would have scored any of them differently. In general, it is important to read a sample of scored transcripts before believing your evaluator; scoring failures are among the most common ways an evaluation is misconfigured.
+
+When you've validated the grader, the skill tells you the size of the evaluation set (cases × repeats × model, and roughly how long it will take), runs the baseline, and prints the score with a confidence interval. What you get back: the cases, the grader, the runner, one JSON line and one full transcript per case, and a plain page that lists each case's score with a link to its transcript. If you want more than that page shows (e.g., a chart), just ask and Claude will build it as an extra page next to it. By default, these extra pages are static files that open locally and load nothing from the network.
+
+### Diagnostic checks
+
+During the baseline runs mentioned above, Claude checks a number of things:
+
+- **Grader**: Claude runs the grader twice on the same output, and reports whether the verdict changed.
+- **Plumbing**: Claude checks for timeouts, API errors, and cut-off answers to ensure infrastructure noise doesn't pass as model variance.
+- **Headroom**: if the baseline already scores about 95% or higher, the skill warns the user and alerts that the hillclimb should aim to explore cost or latency rather than quality.
+
+## HILLCLIMBING
+
+Now that you have a reliable means of grading your application's performance on a task, you can try to improve it. Hillclimbing is an effective way to tune parameters like effort or prompts, which trade-off cost and performance. Some general tips for choosing where to apply it:
+
+- **Cheap iteration** - It should be inexpensive (in terms of time, cost, and effort) to modify whatever surface you are focused on for hillclimbing. Many internal efforts and customers have focused hillclimbing on text, such as prompts and skills. These are easy to change and revert. In contrast, open-ended modifications to an agent harness during hillclimbing may involve extensive code changes.
+- **Attributable** - Changes in the score on your evaluation should be attributable to the surface you are modifying during hillclimbing. For example, several successful applications of hillclimbing have focused on skill triggering. The evaluation metric (the trigger rate for the skill) is directly coupled to the skill description that is being modified.
+- **Well-scoped objective** - One common failure mode is an open-ended request to improve performance without careful consideration of the headroom available in the evaluation; an evaluation that's near saturation or a poorly scoped surface (e.g., an open-ended request to update the harness) is more likely to stall. One generally strong objective across various efforts is cost: even if an evaluation is saturated, you can ask Claude to find ways to reduce cost while keeping performance at parity.
+
+### Overfitting
+
+Even a well-designed evaluation rarely matches the exact task distribution you care about in production. As a result, "overfitting" to an evaluation is a common problem and results in a system that performs better on an evaluation than on production traffic.
+
+There are many ways an evaluation can "leak" into your harness (the code around the model, including prompts, tools, and loop that calls Claude). For example, consider an evaluation task that benefits from OCR, but OCR is rarely beneficial in your production tasks. The evaluation harness might add an OCR tool to your application, which improves on the benchmark without any impact on production. More broadly, hillclimbing may add features to that harness that address edge cases in the particular evaluation examples you've chosen. These harness additions improve your evaluation score, but don't translate to improvements in production.
+
+Three things can help address this:
+
+- **Split the cases**. Use a train set that the hillclimber may read and a test set that is never seen. If the train set scores improve while the test set scores stay flat, then that is a common overfitting warning sign.
+- **Never paste failures into the prompt**. If the hillclimber reads the failing transcripts, it should never paste the failure content into the prompt.
+- **Keep the answers structurally out of the model's reach**. Models can sometimes "reward hack" by directly finding answers to evaluations.
+
+## /CLAUDE-API HILLCLIMB
+
+The hillclimb command in the claude-api skill turns these principles into a guided workflow. When you run `/claude-api hillclimb` in Claude Code, Claude iterates to improve against a given evaluation. You choose what changes it can make including:
+
+- Your system prompt
+- Skills or instruction files
+- Tool descriptions
+- Model choice, effort level, and other API parameters
+- Your harness code
+
+Before it starts, Claude asks what you want to optimize (e.g., performance, or cost while performance holds) and then splits the evaluation set at random into test and train. With a cost goal, it considers a few common cost drivers, including prompt caching, auditing the prompt for compatibility with the selected model, and picking the model and effort setting.
+
+Before the first round, Claude checks that the eval's noise (how far the score can move by chance alone) is smaller than the smallest improvement you'd act on; if it isn't, it says so and suggests more repetitions or cases.
+
+Each round, Claude reads the previous round's train transcripts and proposes one change as a patch. It aims each round at a change whose effect can show above the eval's noise: it fixes the failing behavior at its root (e.g., rewrites the section that causes it or adds a missing rule) rather than rewording a line. It then runs evaluation with the patched change. At this point, Claude applies a check: if the `train` set improves but the `test` set is flat, Claude suspects overfitting and reverts the patch. If there is a regression, Claude reverts. If train and test sets improve, it keeps the patch.
+
+When the score stalls for two or three rounds, Claude reads each remaining train failure and sorts it by cause. It does the same early if no single fix could gain more than the eval's noise, and suggests more repetitions or cases, rather than spending rounds on changes too small to measure. This step can catch ambiguous evaluation cases, harness errors, or run-to-run variance.
+
+Only legitimate failures are included in more hillclimbing rounds.
+
+When hillclimbing completes, Claude leaves your code at the version that did best on the test set for your goal. It reports the test result against the baseline with confidence intervals. If the gain is within noise, it says so and recommends against merging.
+
+## EXAMPLES
+
+### Hillclimbing for cost reduction
+
+We ran `/claude-api hillclimb` on an internal customer support benchmark with the goal of reducing cost and improving performance. The benchmark included 44 tickets, with 30 used for the search and 14 held out. It started on Opus 4.8 at default (high) effort settings with 74.4% decision accuracy on the search tickets and a token cost of 4.6 cents per ticket.
+
+The hillclimb first audited the prompt, removing mandatory tool-call rituals, a scratchpad step, and contradictory rules. Then it tried Opus 5.5 on low effort. This cleared the baseline accuracy bar at 87.8% and cut cost to 1.9 cents per ticket, less than half the starting cost.
+
+Part of that saving comes from Opus 5.5's pricing: input and output tokens cost 20% less than on Opus 4.8, and cache reads cost 60% less. Because Opus 5.5 cleared the bar, the hillclimb then stepped down a tier to check whether a cheaper model could clear it too. Sonnet 5 on low effort scored about the same, 88.9%, at about half the cost, 1 cent per ticket.
+
+Finally, Claude improved the prompt with routing rules and a refund-cap cross-reference, bringing Sonnet 5 to 98.9% at about the same cost. On the 14 held-out tickets that the search never saw, the final configuration scored 90.5% against the original setup's 78.6%, at about one fifth of the cost.
+
+### Hillclimbing for performance improvement
+
+Another example is our claude-api skill, which provides guidance on using our APIs and general tips for working with Claude (including the sub-commands discussed in this article). We want to ensure our skill can correctly implement code that uses our APIs, and we built an evaluation set derived from our documentation to test the skill.
+
+On our evaluation, the skill started at 66%. We gave the hillclimber access to documentation and our SDKs, allowing Claude to identify errors and self-correct them. Claude found that the skill was missing coverage of eight features.
+
+Adding sections for them in the skill improved performance to 74%. It then found errors in C# and Java type tables, boosting performance to 77%.
+
+After the score stalled for two rounds, Claude analyzed the remaining failures and bucketed them by root-cause. A normal round makes one edit for the most common failure. This step makes no edit; it only sorts every remaining failure by cause. This reflection step was useful in a few ways:
+
+- Reflecting across a collection of failures, the hillclimber found that the skill content was present but Claude was simply writing older API shapes (e.g., from its trained priors). To address, the hillclimber added a table near the top of the skill that guided Claude from the forms it remembered to the current ones: for example, from extended thinking with a fixed token budget, which the API now rejects on recent Opus models, to adaptive thinking, and from older versions of the web search and web fetch tools to the current ones. It also moved the C# and Java warnings against fixed-budget thinking above their adaptive-thinking examples. This improved performance to 80%.
+- Tasks that never improved in performance despite addressing obvious content gaps are tells that the example or grader is flawed. One task asked for code that catches one error type, while its grader wanted a chain of at least three. Claude reworded the task. Another grader's instructions contradicted our docs, and testing the real API showed the docs were right. Addressing these, along with more skill edits, brought performance to ~88%.
+
+## GETTING STARTED
+
+These sub-commands can be used directly in Claude Code via the claude-api skill:
+
+Run `/claude-api build-eval` if you want to generate an evaluation set for a particular problem. You can steer it by providing access to examples (e.g., traces). Claude will employ the guidance shared in this article to design the examples and grader, and ensure you approve the examples and the grader.
+
+Run `/claude-api hillclimb` if you have an evaluation and want Claude to improve on this, guided by your goal (e.g., better performance, or lower cost while performance holds). Claude will employ the guidance shared in this article to check for overfitting while climbing and check for bugs in the eval itself, such as a grader that marks a correct-looking answer wrong or a harness error, both before the first round and whenever the score stalls.

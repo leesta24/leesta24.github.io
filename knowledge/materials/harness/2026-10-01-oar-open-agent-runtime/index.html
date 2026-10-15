@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Botiverse 开源的供应商无关编程接口，统一对接 Claude Code / Codex / Cursor / Kimi Code 等 coding-agent harness，提供扁平化事件流、记录流契约 spec、库 + CLI。"><meta name="color-scheme" content="light dark"><title>OAR — Open Agent Runtime: programming interface for all agent harnesses | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/harness/2026-10-01-oar-open-agent-runtime/"><meta property="og:title" content="OAR — Open Agent Runtime: programming interface for all agent harnesses"><meta property="og:description" content="Botiverse 开源的供应商无关编程接口，统一对接 Claude Code / Codex / Cursor / Kimi Code 等 coding-agent harness，提供扁平化事件流、记录流契约 spec、库 + CLI。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/harness/2026-10-01-oar-open-agent-runtime/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/harness/">Agent 框架与运行时</a></nav><header class="article-header"><p class="eyebrow">阅读笔记</p><h1 id="oar--open-agent-runtime-programming-interface-for-all-agent-harnesses">OAR — Open Agent Runtime: programming interface for all agent harnesses</h1><div class="article-meta"><time datetime="2026-10-01">归档于 2026-10-01</time><a href="/knowledge/raw/materials/harness/2026-10-01-oar-open-agent-runtime.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=Agent%20%E6%A1%86%E6%9E%B6">Agent 框架</a><a href="/knowledge/?tag=TypeScript">TypeScript</a><a href="/knowledge/?tag=%E7%BC%96%E7%A8%8B%E6%99%BA%E8%83%BD%E4%BD%93">编程智能体</a><a href="/knowledge/?tag=%E7%BB%9F%E4%B8%80%E6%8E%A5%E5%8F%A3">统一接口</a></div></header><article class="prose"><ul>
+<li><strong>来源</strong>: GitHub 仓库（botiverse/oar）</li>
+<li><strong>链接</strong>: <a href="https://github.com/botiverse/oar" rel="noreferrer">https://github.com/botiverse/oar</a></li>
+<li><strong>归档日期</strong>: 2026-10-01</li>
+<li><strong>标签</strong>: Agent 框架, 开源, TypeScript, 编程智能体, 统一接口</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>Botiverse 开源的 OAR（Open Agent Runtime）：与供应商无关的编程接口，统一对接各类 coding-agent harness（Claude Code、Codex、Cursor、Kimi Code、Pi 等），让开发者删掉 harness 适配逻辑、只关注产物和 UX；提供库 + CLI + 记录流/查询契约 spec。</p>
+<h2 id="要点">要点</h2>
+<ul>
+<li><strong>定位</strong>: provider-independent 的编程接口，为构建 agent workspace 和其他应用打地基；口号是 &quot;Delete harness logic and focus on outcomes and UX.&quot;</li>
+<li><strong>支持的 runtimes</strong>: Antigravity、Claude Code、Codex、Cursor、Grok Build、Kimi Code、Pi。</li>
+<li><strong>库用法</strong>: <code>import { promptAndWait, runtimes } from &quot;@botiverse/oar&quot;</code>；<code>runtimes.require(&quot;grok&quot;)</code> 拿 runtime → <code>session()</code> 建会话 → <code>session.events(cb)</code> 订阅扁平化事件流（text_delta / tool_call_started / turn_ended 等，每个事件带 seq 和 agentPath）→ <code>promptAndWait(session, prompt)</code> 跑一轮。</li>
+<li><strong>事件模型</strong>: <code>events()</code> 是&quot;扁平、带归因的会话读取&quot;——每个事实一个 Event（用户消息回显、文本、推理、工具调用起/中/止、回合起止、用量、模型、effort、compaction、重试、应用请求、控制拒绝、进程退出）；<code>{ coalesceText: true }</code> 按块收文本；<code>session.rawEvents()</code> / <code>session.records()</code> 暴露底层原生记录流（含完整 native payload）。</li>
+<li><strong>文档体系</strong>: docs/design/（设计动机与关键设计问题）、docs/spec/（record-stream 与查询契约）、Conversation projection（从请求/响应/原生消息构建对话 UI）、docs/spec/inventory.md（独立 native skill、MCP server 与工具查询）、docs/runtimes/（各 runtime 原生语义与 oar 的映射）、docs/prior-arts/feature-comparison.md（竞品按特性与证据对比）、docs/design/decisions.md（设计决策、证据与重审条件）、docs/design/roadmap.md。</li>
+<li><strong>系统观</strong>: docs/design/system.md 把 library、evidence layer、projections、continuation 描述为一个面向 agent 的整体系统。</li>
+<li><strong>CLI</strong>: <code>npx @botiverse/oar-cli list</code> / <code>oar run claude &quot;What does this repo do?&quot; --record run.jsonl</code>，单独发布为 <code>@botiverse/oar-cli</code>。</li>
+<li><strong>技术栈</strong>: TypeScript，ESM-only，要求 Node.js 24+；pnpm monorepo（packages/ + apps/arena + sea-trial + experiments）。</li>
+<li><strong>仓库元数据</strong>（2026-10-01）: star 96，commit 372，Apache-2.0，建仓 2026-08-05；所属 org botiverse 还有 antiproton（durable multi-tenant runtime，凭证不进模型上下文）、hands、k-carrier 等项目。</li>
+</ul>
+<h2 id="readme-原文">README 原文</h2>
+<h2 id="oar---programming-interface-for-all-agent-harnesses">OAR - <em>programming interface for all agent harnesses</em></h2>
+<p>OAR (<strong>O</strong>pen <strong>A</strong>gent <strong>R</strong>untime) is a provider-independent programming interface for coding-agent runtimes: a solid foundation for building agent workspaces and other applications.</p>
+<p><strong>Delete harness logic and focus on outcomes and UX.</strong></p>
+<h2 id="supported-runtimes">Supported runtimes</h2>
+<ul>
+<li>Antigravity, Claude Code, Codex, Cursor, Grok Build, Kimi Code, Pi</li>
+</ul>
+<h2 id="library">Library</h2>
+<pre><code class="language-ts"><span class="hljs-keyword">import</span> { promptAndWait, runtimes } <span class="hljs-keyword">from</span> <span class="hljs-string">&quot;@botiverse/oar&quot;</span>;
+
+<span class="hljs-keyword">const</span> grok = runtimes.<span class="hljs-built_in">require</span>(<span class="hljs-string">&quot;grok&quot;</span>);
+<span class="hljs-keyword">const</span> installation = <span class="hljs-keyword">await</span> grok.<span class="hljs-property">installation</span>?.();
+<span class="hljs-keyword">if</span> (installation?.<span class="hljs-property">kind</span> === <span class="hljs-string">&quot;available&quot;</span>) {
+  <span class="hljs-keyword">const</span> session = <span class="hljs-keyword">await</span> grok.<span class="hljs-title function_">session</span>(installation, { <span class="hljs-attr">cwd</span>: process.<span class="hljs-title function_">cwd</span>() });
+  session.<span class="hljs-title function_">events</span>(<span class="hljs-function">(<span class="hljs-params">event</span>) =&gt;</span> {
+    <span class="hljs-keyword">switch</span> (event.<span class="hljs-property">kind</span>) {
+      <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;text_delta&quot;</span>: process.<span class="hljs-property">stdout</span>.<span class="hljs-title function_">write</span>(event.<span class="hljs-property">text</span>); <span class="hljs-keyword">break</span>;
+      <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;tool_call_started&quot;</span>: <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`[<span class="hljs-subst">${event.tool}</span>]`</span>); <span class="hljs-keyword">break</span>;
+      <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;turn_ended&quot;</span>: <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(event.<span class="hljs-property">outcome</span>.<span class="hljs-property">kind</span>); <span class="hljs-keyword">break</span>;
+    }
+  });
+  <span class="hljs-keyword">const</span> run = <span class="hljs-keyword">await</span> <span class="hljs-title function_">promptAndWait</span>(session, <span class="hljs-string">&quot;Inspect this repository&quot;</span>, { <span class="hljs-attr">timeoutMs</span>: <span class="hljs-number">120_000</span> });
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(run.<span class="hljs-property">kind</span> === <span class="hljs-string">&quot;rejected&quot;</span> ? run.<span class="hljs-property">code</span> : run.<span class="hljs-property">outcome</span>);
+  <span class="hljs-keyword">await</span> session.<span class="hljs-title function_">dispose</span>();
+}
+</code></pre>
+<p><code>events()</code> is the flat, attributed reading of the session: one <code>Event</code> per fact (native user message echoes, text, reasoning, tool call start / progress / end, turn start and end, usage, model, effort, compaction, retry, app requests, control rejections, the process exit), with <code>seq</code> and <code>agentPath</code> on each. Pass <code>{ coalesceText: true }</code> to get text in blocks instead of pieces. When the runtime's own frame matters, <code>session.rawEvents()</code> and <code>session.records()</code> expose the underlying record stream with every native payload verbatim.</p>
+<h2 id="cli">CLI</h2>
+<pre><code>npx @botiverse/oar-cli list
+oar run claude &quot;What does this repo do?&quot; --record run.jsonl
+</code></pre>
+<p>ESM-only, requires Node.js 24+, Apache-2.0.</p>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/harness/2026-10-14-personal-agent-reference-architectures/">Raft、OpenMuse、nanoMuse：个人 Agent 架构参考 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/harness/2026-10-07-pi-durable-vs-opencode/">Pi Durable vs. OpenCode: An Architectural Comparison <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/harness/2026-10-01-a13n-agent-framework-analysis/">Converge AI a13n Agent 框架架构分析 <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E8%A6%81%E7%82%B9">要点</a><a class="h2" href="#readme-%E5%8E%9F%E6%96%87">README 原文</a><a class="h2" href="#oar---programming-interface-for-all-agent-harnesses">OAR - programming interface for all agent harnesses</a><a class="h2" href="#supported-runtimes">Supported runtimes</a><a class="h2" href="#library">Library</a><a class="h2" href="#cli">CLI</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>
