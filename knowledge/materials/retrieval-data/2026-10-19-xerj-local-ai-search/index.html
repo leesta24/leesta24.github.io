@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Rust 单二进制本地搜索引擎：autoindex 任意文件夹，agent 查索引拿精确片段而非 grep 读文件；ES API 兼容，原生 MCP server，带 agent memory 与 Jev 重排。"><meta name="color-scheme" content="light dark"><title>XERJ：给 AI agent 的本地搜索（autoindex + reference coding） | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/retrieval-data/2026-10-19-xerj-local-ai-search/"><meta property="og:title" content="XERJ：给 AI agent 的本地搜索（autoindex + reference coding）"><meta property="og:description" content="Rust 单二进制本地搜索引擎：autoindex 任意文件夹，agent 查索引拿精确片段而非 grep 读文件；ES API 兼容，原生 MCP server，带 agent memory 与 Jev 重排。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/retrieval-data/2026-10-19-xerj-local-ai-search/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css?v=d86f8a63c5cd"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/retrieval-data/">检索与数据</a></nav><header class="article-header"><h1 id="xerj给-ai-agent-的本地搜索autoindex--reference-coding">XERJ：给 AI agent 的本地搜索（autoindex + reference coding）</h1><div class="article-meta"><time datetime="2026-10-19">归档于 2026-10-19</time><a href="/knowledge/raw/materials/retrieval-data/2026-10-19-xerj-local-ai-search.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=%E6%9C%AC%E5%9C%B0%E6%90%9C%E7%B4%A2">本地搜索</a><a href="/knowledge/?tag=Agent%20%E5%B7%A5%E5%85%B7">Agent 工具</a><a href="/knowledge/?tag=MCP">MCP</a><a href="/knowledge/?tag=Elasticsearch%20%E5%85%BC%E5%AE%B9">Elasticsearch 兼容</a><a href="/knowledge/?tag=Rust">Rust</a><a href="/knowledge/?tag=Agent%20Memory">Agent Memory</a><a href="/knowledge/?tag=Apache-2.0">Apache-2.0</a></div></header><article class="prose"><ul>
+<li><strong>标题</strong>: XERJ</li>
+<li><strong>作者/发布方</strong>: xerj-org（官网 xerj.org）</li>
+<li><strong>原文 URL</strong>: <a href="https://github.com/xerj-org/xerj" rel="noreferrer">https://github.com/xerj-org/xerj</a></li>
+<li><strong>发布日期</strong>: 仓库建于 2026-06-30（持续发布，归档时 311 个 release）</li>
+<li><strong>归档日期</strong>: 2026-10-19</li>
+<li><strong>标签</strong>: 检索, 本地搜索, Agent 工具, MCP, Elasticsearch 兼容, Rust, RAG, Agent Memory, Apache-2.0</li>
+<li><strong>保存形式</strong>: 摘要（基于 README 全文阅读）</li>
+<li><strong>阅读/核验状态</strong>: 已读 README 全文；性能数据为发布方自测，未独立验证</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>XERJ 是 Rust 写的单静态二进制本地搜索引擎：一条 <code>xerj autoindex &lt;文件夹&gt;</code> 自动索引代码、文档、日志、PDF、SQLite、邮件等，让 coding agent 查索引拿精确片段而不是 grep 逐文件读（号称省 40x tokens）；兼容 Elasticsearch REST API（conformance 1366/1369），原生暴露 MCP server（13 个 tools），附带 agent memory 命名空间和 Jev 重排集成。</p>
+<h2 id="主要要点">主要要点</h2>
+<ul>
+<li><strong>解决的问题</strong>: agent 烧 context window 读文件（WordPress core PHP 约 5.2M tokens = 26 个完整上下文窗口）；grep 只能定位行，判断仍需打开整文件。查索引每次提问只花 KB 级 tokens。</li>
+<li><strong>autoindex</strong>: 零配置，自动嗅探文件类型、每个数据集建一个索引；代码经 tree-sitter 解析，带 symbol 和行号（AST-aware，不是纯文本）；重索引增量（内容 hash 不变跳过解析）。</li>
+<li><strong>核心用例 reference coding</strong>: agent 把任务最接近的开源项目 clone 下来索引，先检索&quot;别人怎么解决的&quot;再写自己的代码。发布方对照实验（8 任务、4 语言、每臂 16 runs、<code>claude -p</code> 真实 token 计数）：XERJ 输出 tokens 9,982 vs grep 26,477 vs 纯记忆 260,916，同等 16/16 solve rate；日常开发用户报告约 5x。价值受记忆影响：私有/内部/冷门/训练截止后代码上赢，已被模型记住的流行库上中性甚至有害。</li>
+<li><strong>Jev 集成</strong>（与知识库已有 TypeSafe Jev 卡片相关）:
+<ol>
+<li>可选 rerank：<code>_search</code> 加 <code>&quot;rerank&quot;: {}</code> 把 top 结果送 Jev 重排，FiQA nDCG@10 0.24→0.36；需配 key，文档明示会把结果文本发到 TypeSafe 服务器；</li>
+<li>本地 <code>/_decide</code>：基于已标注样本的历史投票（<code>xerj-history-vote-1</code>），数据不出本机。</li>
+</ol>
+</li>
+<li><strong>MCP</strong>: <code>xerj mcp</code> 即 stdio server（13 tools：search / semantic / vector / hybrid、memory store-recall、second-brain 图链接、code_search 等）；<code>xerj init</code> 一键接入 Claude Code / Cursor。</li>
+<li><strong>Agent memory</strong>: <code>/_memory/{namespace}</code> 按语义跨会话召回 + second brain 文档关系图。</li>
+<li><strong>ES 兼容与性能</strong>: 实现 ES REST API（indices、search、aggs、kNN、scroll 等），Kibana 和官方客户端直连；对 ES 8.13.4 实测 55 胜 26 平 4 负，ingest 吞吐 1.72x，磁盘占用小 1.61x；4 个败项都是高并发写入下的读 p99，发布方如实列出。</li>
+<li><strong>安全模型</strong>: <code>--insecure</code> 是明确的信任边界（无 TLS、无 auth，调用者即超管），默认只绑 127.0.0.1；非 insecure 启动默认开 auth。</li>
+<li><strong>社区机制</strong>: 加入方式 = 跑起来 + 交一份 field report（<code>user-feedback/</code> 下一个 markdown PR，CLA 豁免）；人类和 agent 都欢迎。</li>
+<li><strong>仓库元数据</strong>（归档时）: star 8,721，fork 470，commit 3,385，Apache-2.0。</li>
+</ul>
+<h2 id="适用场景">适用场景</h2>
+<ul>
+<li>给 coding agent 配本地代码库索引，替代&quot;grep + 读整文件&quot;的工作流</li>
+<li>Agent 长期记忆（语义召回 + 关系图）</li>
+<li>轻量 ES 替代：单二进制、无 JVM 部署</li>
+</ul>
+<h2 id="相关资料">相关资料</h2>
+<ul>
+<li><a href="/knowledge/materials/evaluation/2026-10-07-jev-as-a-judge-for-agent-evaluations/">Jev-as-a-Judge for Agent Evaluations</a> — TypeSafe Jev 决策模型</li>
+<li><a href="/knowledge/materials/decision-models/2026-10-14-nanojev-nimble/">NanoJev 与 Nimble：两种可研究的决策模型实现</a></li>
+<li><a href="/knowledge/materials/retrieval-data/2026-10-14-turbopuffer-vector-primary-index/">Turbopuffer v3：为什么不再以向量索引作为主索引</a> — 向量索引架构取舍对照</li>
+</ul>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/retrieval-data/2026-10-14-turbopuffer-vector-primary-index/">Turbopuffer v3：为什么不再以向量索引作为主索引 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/retrieval-data/2026-09-29-lakebase-search-postgres/">Lakebase Search: State-of-the-art full text and vector search for Postgres <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E4%B8%BB%E8%A6%81%E8%A6%81%E7%82%B9">主要要点</a><a class="h2" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF">适用场景</a><a class="h2" href="#%E7%9B%B8%E5%85%B3%E8%B5%84%E6%96%99">相关资料</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>
