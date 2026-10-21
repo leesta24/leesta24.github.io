@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="DeepSeek 线上推理栈的开源版：vLLM 底座 + FlashMLA/DeepGEMM/DeepEP，自研并行（Attention DP、MoE EP+EPLB）与 DSpark 投机解码，支持 SM100 与昇腾 950。"><meta name="color-scheme" content="light dark"><title>DeepInfer：DeepSeek 官方开源推理框架 | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/model-inference/2026-10-21-deepinfer-deepseek-inference/"><meta property="og:title" content="DeepInfer：DeepSeek 官方开源推理框架"><meta property="og:description" content="DeepSeek 线上推理栈的开源版：vLLM 底座 + FlashMLA/DeepGEMM/DeepEP，自研并行（Attention DP、MoE EP+EPLB）与 DSpark 投机解码，支持 SM100 与昇腾 950。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/model-inference/2026-10-21-deepinfer-deepseek-inference/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css?v=d86f8a63c5cd"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/model-inference/">模型推理与服务</a></nav><header class="article-header"><h1 id="deepinferdeepseek-官方开源推理框架">DeepInfer：DeepSeek 官方开源推理框架</h1><div class="article-meta"><time datetime="2026-10-21">归档于 2026-10-21</time><a href="/knowledge/raw/materials/model-inference/2026-10-21-deepinfer-deepseek-inference.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=LLM%20%E6%8E%A8%E7%90%86">LLM 推理</a><a href="/knowledge/?tag=DeepSeek">DeepSeek</a><a href="/knowledge/?tag=MoE">MoE</a><a href="/knowledge/?tag=%E6%8A%95%E6%9C%BA%E8%A7%A3%E7%A0%81">投机解码</a><a href="/knowledge/?tag=vLLM">vLLM</a><a href="/knowledge/?tag=%E6%98%87%E8%85%BE">昇腾</a></div></header><article class="prose"><ul>
+<li><strong>标题</strong>: DeepInfer: High-performance, large-scale inference framework for DeepSeek models</li>
+<li><strong>作者/发布方</strong>: DeepSeek-AI</li>
+<li><strong>原文 URL</strong>: <a href="https://github.com/deepseek-ai/DeepInfer" rel="noreferrer">https://github.com/deepseek-ai/DeepInfer</a></li>
+<li><strong>发布日期</strong>: 2026-10-16（仓库创建）</li>
+<li><strong>归档日期</strong>: 2026-10-21</li>
+<li><strong>标签</strong>: LLM 推理, DeepSeek, MoE, 投机解码, vLLM, Apache-2.0, 昇腾</li>
+<li><strong>保存形式</strong>: 摘要（基于 README 全文阅读）</li>
+<li><strong>阅读/核验状态</strong>: 已读 README 全文；性能图为发布方自测，未独立验证</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>DeepSeek 支撑其大规模线上服务的推理框架开源版（离线推理部分）：基于 vLLM 构建，集成 FlashMLA / DeepGEMM / DeepEP 等自研 kernel、Attention DP + MoE EP+EPLB 并行、DSpark 投机解码与置信度调度验证、SWA 有界回放和 batch-invariant 确定性采样；仅支持 DeepSeek-V4.1-Flash，硬件限 NVIDIA SM100 与华为昇腾 950。</p>
+<h2 id="主要要点">主要要点</h2>
+<ul>
+<li><strong>定位</strong>: DeepSeek 生产推理栈的开源释放，本次只给 offline inference；KV cache 系统、Prefill/Decode 分离、DP replica 负载均衡未包含（README 明说 VE/PD 分离&quot;大部分引擎功能已实现&quot;但不在本次发布内）。</li>
+<li><strong>支持模型</strong>: 仅 DeepSeek-V4.1-Flash（默认 checkpoint <code>DeepSeek-V4.1-Flash-1017</code>）。</li>
+<li><strong>优化 kernel</strong>: FlashMLA、DeepGEMM、DeepEP、TileKernels、DeepSelect 及自研 TileLang kernel。</li>
+<li><strong>并行策略</strong>: Attention 侧 DP / balanced CP；MoE 侧 EP + EPLB（专家并行负载均衡）。</li>
+<li><strong>DSpark 与置信度调度验证</strong>: 用 draft tokens 加速解码，按置信度估计调度验证；环境变量 <code>DEEPINFER_ENABLE_MTP_VARLEN=1</code> 开启，<code>DEEPINFER_USE_NEXTN_DECODE</code> 控制最大 draft 长度（默认 5）。</li>
+<li><strong>Decoder SWA bounded replay</strong>: prefill 只回放有界后缀以减少计算（保留后缀须覆盖 SWA 窗口 + 最大回溯长度）。</li>
+<li><strong>异步调度</strong>: CPU batch 调度与设备执行重叠（zero-overhead batch scheduler），默认开启。</li>
+<li><strong>Batch-invariant 与确定性采样</strong>: 结果不随 batch 组合变化；固定 <code>seq_seed</code> 可复现输出（仅 NVIDIA）。</li>
+<li><strong>结构化输出</strong>: regex / JSON schema / EBNF 约束，<code>SamplingParams</code> 传 <code>so_args</code>。</li>
+<li><strong>硬件与构建</strong>: NVIDIA SM100（CUDA 13）与华为昇腾 950（CANN 9.2）双平台；Linux、GCC ≥ 13、Python 3.12，源码构建。</li>
+<li><strong>性能（发布方自测）</strong>: prefill 测 4×SM100，decode 测 64×SM100（各一个 scale-up domain），图表给出吞吐-延迟曲线，复现脚本 <code>run_sweep.sh</code>。</li>
+<li><strong>血统</strong>: 主要基于 vLLM 构建，另借鉴 SGLang 与 TensorRT-LLM。</li>
+<li><strong>仓库元数据</strong>（归档时）: star 14,279，fork 1,356，commit 仅 3（典型一次性开源 dump），Apache-2.0。</li>
+</ul>
+<h2 id="适用场景">适用场景</h2>
+<ul>
+<li>研究 DeepSeek 线上推理栈的工程实现（kernel 选型、并行策略、投机解码调度）</li>
+<li>大规模 MoE 模型推理优化参考</li>
+<li>昇腾平台 LLM 推理部署参考</li>
+</ul>
+<h2 id="相关资料">相关资料</h2>
+<ul>
+<li>暂无（模型推理与服务模块首篇）</li>
+</ul>
+</article><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E4%B8%BB%E8%A6%81%E8%A6%81%E7%82%B9">主要要点</a><a class="h2" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF">适用场景</a><a class="h2" href="#%E7%9B%B8%E5%85%B3%E8%B5%84%E6%96%99">相关资料</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>
