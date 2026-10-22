@@ -10,3 +10,4 @@ Agent loop、Harness 接口、持久执行、会话与任务编排。框架整�
 - [OpenAgentCore — Open-source, self-hosted implementation of the OpenAI Agents API](2026-10-01-openagentcore.md)
 - [Pi Durable vs. OpenCode: An Architectural Comparison](2026-10-07-pi-durable-vs-opencode.md)
 - [Raft、OpenMuse、nanoMuse：个人 Agent 架构参考](2026-10-14-personal-agent-reference-architectures.md)
+- [Muse 与 Town：按模块拆解个人 Agent 的实现方案](2026-10-23-muse-town-module-implementation-analysis.md)
