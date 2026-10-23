@@ -4,10 +4,10 @@
 
 | 模块 | 范围 | 资料数 |
 | --- | --- | --- |
-| [Agent 框架与运行时](materials/harness/README.md) | Agent loop、Harness 接口、持久执行、会话与任务编排。框架整体分析归这里，侧重部署资源与沙箱的文章归 infrastructure。 | 6 |
+| [Agent 框架与运行时](materials/harness/README.md) | Agent loop、Harness 接口、持久执行、会话与任务编排。框架整体分析归这里，侧重部署资源与沙箱的文章归 infrastructure。 | 7 |
 | [上下文与记忆](materials/context-memory/README.md) | 上下文构造、压缩、prompt cache、长期记忆和用户建模。 | 3 |
 | [评测与优化](materials/evaluation/README.md) | 评测集、裁判、轨迹评估、迭代优化与可观测性。 | 5 |
-| [Agent 基础设施](materials/infrastructure/README.md) | 沙箱、部署、多租户、资源调度、MCP 网关与工具接入设施。 | 6 |
+| [Agent 基础设施](materials/infrastructure/README.md) | 沙箱、部署、多租户、资源调度、MCP 网关与工具接入设施。 | 7 |
 | [检索与数据](materials/retrieval-data/README.md) | 向量搜索、全文检索、混合检索、RAG 与数据库。 | 3 |
 | [软件工程](materials/software-engineering/README.md) | 通用软件设计、工程方法与经典文章。 | 2 |
 | [逆向工程](materials/reverse-engineering/README.md) | 程序行为分析、逆向方法和工具。 | 1 |
@@ -22,6 +22,8 @@
 | 日期 | 标题与归档链接 | 来源 | 标签 | 一句话摘要 |
 | --- | --- | --- | --- | --- |
 | 2026-10-23 | [Muse 与 Town：按模块拆解个人 Agent 的实现方案](materials/harness/2026-10-23-muse-town-module-implementation-analysis.md) | 技术分析 | Personal Agent, 记忆, 主动性, 沙箱, 持久执行, 权限 | 按技术与功能模块拆解记忆、后台工作、交付、凭证、双层沙箱、URI 文件闸门和产物运行时，明确事实、推断、参考实现与版本冲突。 |
+| 2026-10-22 | [Amp Self-Hosted Orbs：把 agent 执行环境搬进自己的基础设施](materials/infrastructure/2026-10-22-amp-self-hosted-orbs.md) | Amp | Agent 基础设施, 沙箱, 自托管, 执行环境 | Amp 开放自托管其 agent 执行环境 Orbs：provider 外连 Amp 收 spawn/pause/delete，dispatch 到用户自备程序（Docker/E2B/K8s/Modal 等），控制面托管、执行面 BYOC。 |
+| 2026-10-22 | [Waku Agent：local-first 的个人 agent harness](materials/harness/2026-10-22-waku-agent-local-first-harness.md) | GitHub (ShenSeanChen/waku-agent) | Agent 框架, Personal Agent, 本地优先, Memory, Eval, Python, MIT | 四支柱（Harness/Loop/Memory/Eval）极简实现：loop 约 95 行 Python，memory 单个 SQLite 文件，eval 内置双轨评测与发布门禁；自称 OpenClaw 同架构 1/100 代码量。 |
 | 2026-10-21 | [DeepInfer：DeepSeek 官方开源推理框架](materials/model-inference/2026-10-21-deepinfer-deepseek-inference.md) | GitHub (deepseek-ai/DeepInfer) | LLM 推理, DeepSeek, MoE, 投机解码, vLLM, 昇腾 | DeepSeek 线上推理栈的开源版：vLLM 底座 + FlashMLA/DeepGEMM/DeepEP，自研并行（Attention DP、MoE EP+EPLB）与 DSpark 投机解码，支持 SM100 与昇腾 950。 |
 | 2026-10-19 | [MotionVideo：AI 生成动态视频灵感库](materials/generative-media/2026-10-19-motionvideo-xyz.md) | MotionVideo（社区策展） | AI 视频, Prompt 灵感, 动态设计 | 社区策展的 AI 生成动态视频画廊：每条是 prompt/skill 生成的短视频作品，覆盖 showreel、产品宣传片、UGC 广告等，附原帖链接。 |
 | 2026-10-19 | [XERJ：给 AI agent 的本地搜索](materials/retrieval-data/2026-10-19-xerj-local-ai-search.md) | GitHub (xerj-org/xerj) | 本地搜索, Agent 工具, MCP, Elasticsearch 兼容, Rust, Agent Memory, Apache-2.0 | Rust 单二进制本地搜索引擎：autoindex 任意文件夹，agent 查索引拿精确片段而非 grep 读文件；ES API 兼容，原生 MCP server，带 agent memory 与 Jev 重排。 |

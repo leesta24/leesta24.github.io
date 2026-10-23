@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Amp 开放自托管其 agent 执行环境 Orbs：provider 外连 Amp 收 spawn/pause/delete，dispatch 到用户自备程序（Docker/E2B/K8s/Modal 等），控制面托管、执行面 BYOC。"><meta name="color-scheme" content="light dark"><title>Amp Self-Hosted Orbs：把 agent 执行环境搬进自己的基础设施 | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/infrastructure/2026-10-22-amp-self-hosted-orbs/"><meta property="og:title" content="Amp Self-Hosted Orbs：把 agent 执行环境搬进自己的基础设施"><meta property="og:description" content="Amp 开放自托管其 agent 执行环境 Orbs：provider 外连 Amp 收 spawn/pause/delete，dispatch 到用户自备程序（Docker/E2B/K8s/Modal 等），控制面托管、执行面 BYOC。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/infrastructure/2026-10-22-amp-self-hosted-orbs/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css?v=d86f8a63c5cd"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/infrastructure/">Agent 基础设施</a></nav><header class="article-header"><h1 id="amp-self-hosted-orbs把-agent-执行环境搬进自己的基础设施">Amp Self-Hosted Orbs：把 agent 执行环境搬进自己的基础设施</h1><div class="article-meta"><time datetime="2026-10-22">归档于 2026-10-22</time><a href="/knowledge/raw/materials/infrastructure/2026-10-22-amp-self-hosted-orbs.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=Agent%20%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD">Agent 基础设施</a><a href="/knowledge/?tag=%E6%B2%99%E7%AE%B1">沙箱</a><a href="/knowledge/?tag=%E8%87%AA%E6%89%98%E7%AE%A1">自托管</a><a href="/knowledge/?tag=%E6%89%A7%E8%A1%8C%E7%8E%AF%E5%A2%83">执行环境</a></div></header><article class="prose"><ul>
+<li><strong>标题</strong>: Self-Hosted Orbs</li>
+<li><strong>作者/发布方</strong>: Amp（ampcode.com）</li>
+<li><strong>原文 URL</strong>: <a href="https://ampcode.com/news/self-hosted-orbs" rel="noreferrer">https://ampcode.com/news/self-hosted-orbs</a></li>
+<li><strong>发布日期</strong>: 2026-10-22</li>
+<li><strong>归档日期</strong>: 2026-10-22</li>
+<li><strong>标签</strong>: Agent 基础设施, 沙箱, 自托管, Amp, 执行环境, Kubernetes</li>
+<li><strong>保存形式</strong>: 摘要（基于原文全文阅读）</li>
+<li><strong>阅读/核验状态</strong>: 已读原文全文</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>Amp 把其云端 agent 执行环境 Orbs（每个 thread 一个）开放自托管：在自己基础设施里跑 <code>amp orb provider</code>，它主动外连 Amp 接收 spawn/pause/delete 请求，再分发给你自备的 dispatch 程序（环境变量契约）去真正启停机器——Docker、E2B、K8s、Modal、Daytona 等都能接，Amp 只定义契约、不管你的实现。</p>
+<h2 id="主要要点">主要要点</h2>
+<ul>
+<li><strong>背景</strong>: Orbs 是 Amp 托管的 agent 运行环境（每个 thread 一个 orb，在里面 clone 仓库、跑 setup、执行 agent 工具）。自托管版让你用自己的算力复刻这个体验。</li>
+<li><strong>对算力的定性要求</strong>: 快速启动新机器、同样快速地休眠与恢复、能长期保留、能 scale to zero（大量休眠 orb 不产生负担）。</li>
+<li><strong>架构（控制面外置、执行面自备）</strong>:
+<ol>
+<li>在你的基础设施内运行 <code>amp orb provider ./dispatch.sh</code>，provider 主动向 ampcode.com 建立连接并等待事件——<strong>不需要任何入站端口</strong>；</li>
+<li>Amp 按 thread 发送 spawn / pause / delete 请求；</li>
+<li>provider 把请求分发给用户提供的任意程序，契约是环境变量：<code>ORB_OPERATION</code>（spawn/pause/delete）、<code>ORB_ID</code>、<code>ORB_TOKEN</code>、<code>ORB_IMAGE</code>、<code>AMP_URL</code>；</li>
+<li>机器起来后在其中运行 <code>amp orb bootstrap</code>（带 ORB_TOKEN），orb 反向连回它所属的 thread。</li>
+</ol>
+</li>
+<li><strong>官方示例后端</strong>: Docker、E2B、Apple containers、Modal、Vercel Sandbox、Daytona、exe.dev，各给完整 dispatch 脚本；Kubernetes 有官方 Helm chart（GKE/EKS/AKS），paused orb 存入快照存储、可在另一个 worker 节点恢复，免写 dispatch。</li>
+<li><strong>实现差异由后端吸收</strong>: 如 Modal 没有 pause，示例用&quot;快照文件系统 + terminate&quot;模拟 pause、从快照恢复模拟 resume；Vercel 用 persistent sandbox + snapshot 管理。</li>
+<li><strong>镜像</strong>: 可用 Amp 预置的 <code>ORB_IMAGE</code>（含 Amp CLI 与依赖），也可换任意 Linux 镜像，只要能在里面启动 <code>amp orb bootstrap</code>。</li>
+<li><strong>Amp 自己的劝退</strong>: 标题直言 &quot;You Probably Shouldn't Self-Host Orbs&quot;——为受合规约束（代码运行位置）、需访问内网或需定制硬件的企业而建；接口开放的代价是 Amp 只支持契约的自己那一端，不支持你接的每种基础设施。</li>
+<li><strong>定价</strong>: 个人与团队免费；企业自 2026-10-29 起按标准 orb 定价收费（此前全 workspace 免费）。</li>
+</ul>
+<h2 id="适用场景">适用场景</h2>
+<ul>
+<li>企业把 coding agent 执行环境落在自有云/内网的设计参考</li>
+<li>&quot;控制面托管 + 执行面 BYOC&quot; 的沙箱接口设计：一个三操作（spawn/pause/delete）+ 环境变量的最小契约</li>
+</ul>
+<h2 id="相关资料">相关资料</h2>
+<ul>
+<li><a href="/knowledge/materials/infrastructure/2026-10-01-agent-substrate-cncf-sandbox-523/">Sandbox Agent Substrate — CNCF Sandbox 申请（Issue #523）</a> — 另一条 agent 沙箱运行时路线（K8s 高密度 + 快照 suspend/resume）</li>
+<li><a href="/knowledge/materials/infrastructure/2026-10-14-netlify-microvm-edge-functions/">Netlify：从 V8 isolates 到 Firecracker MicroVM</a> — 边缘执行环境的快照恢复思路对照</li>
+</ul>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/infrastructure/2026-10-14-kernel-browser-infrastructure/">Kernel：浏览器会话、认证与可观测性基础设施 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/infrastructure/2026-10-14-linq-imessage-api/">Linq：面向 Personal Agent 的 iMessage 接入 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/infrastructure/2026-10-14-netlify-microvm-edge-functions/">Netlify：从 V8 isolates 到 Firecracker MicroVM <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E4%B8%BB%E8%A6%81%E8%A6%81%E7%82%B9">主要要点</a><a class="h2" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF">适用场景</a><a class="h2" href="#%E7%9B%B8%E5%85%B3%E8%B5%84%E6%96%99">相关资料</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>

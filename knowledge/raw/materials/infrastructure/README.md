@@ -11,3 +11,4 @@
 - [Personal Agent Protocol：个人 Agent 的服务授权入口](2026-10-14-personal-agent-protocol.md)
 - [Kernel：浏览器会话、认证与可观测性基础设施](2026-10-14-kernel-browser-infrastructure.md)
 - [Linq：面向 Personal Agent 的 iMessage 接入](2026-10-14-linq-imessage-api.md)
+- [Amp Self-Hosted Orbs：把 agent 执行环境搬进自己的基础设施](2026-10-22-amp-self-hosted-orbs.md)

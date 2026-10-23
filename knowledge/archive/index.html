@@ -11,7 +11,7 @@
 <tr>
 <td><a href="/knowledge/materials/harness/">Agent 框架与运行时</a></td>
 <td>Agent loop、Harness 接口、持久执行、会话与任务编排。框架整体分析归这里，侧重部署资源与沙箱的文章归 infrastructure。</td>
-<td>6</td>
+<td>7</td>
 </tr>
 <tr>
 <td><a href="/knowledge/materials/context-memory/">上下文与记忆</a></td>
@@ -26,7 +26,7 @@
 <tr>
 <td><a href="/knowledge/materials/infrastructure/">Agent 基础设施</a></td>
 <td>沙箱、部署、多租户、资源调度、MCP 网关与工具接入设施。</td>
-<td>6</td>
+<td>7</td>
 </tr>
 <tr>
 <td><a href="/knowledge/materials/retrieval-data/">检索与数据</a></td>
@@ -88,6 +88,20 @@
 <td>技术分析</td>
 <td>Personal Agent, 记忆, 主动性, 沙箱, 持久执行, 权限</td>
 <td>按技术与功能模块拆解记忆、后台工作、交付、凭证、双层沙箱、URI 文件闸门和产物运行时，明确事实、推断、参考实现与版本冲突。</td>
+</tr>
+<tr>
+<td>2026-10-22</td>
+<td><a href="/knowledge/materials/infrastructure/2026-10-22-amp-self-hosted-orbs/">Amp Self-Hosted Orbs：把 agent 执行环境搬进自己的基础设施</a></td>
+<td>Amp</td>
+<td>Agent 基础设施, 沙箱, 自托管, 执行环境</td>
+<td>Amp 开放自托管其 agent 执行环境 Orbs：provider 外连 Amp 收 spawn/pause/delete，dispatch 到用户自备程序（Docker/E2B/K8s/Modal 等），控制面托管、执行面 BYOC。</td>
+</tr>
+<tr>
+<td>2026-10-22</td>
+<td><a href="/knowledge/materials/harness/2026-10-22-waku-agent-local-first-harness/">Waku Agent：local-first 的个人 agent harness</a></td>
+<td>GitHub (ShenSeanChen/waku-agent)</td>
+<td>Agent 框架, Personal Agent, 本地优先, Memory, Eval, Python, MIT</td>
+<td>四支柱（Harness/Loop/Memory/Eval）极简实现：loop 约 95 行 Python，memory 单个 SQLite 文件，eval 内置双轨评测与发布门禁；自称 OpenClaw 同架构 1/100 代码量。</td>
 </tr>
 <tr>
 <td>2026-10-21</td>

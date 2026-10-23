@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="四支柱（Harness/Loop/Memory/Eval）极简实现：loop 约 95 行 Python，memory 单个 SQLite 文件，eval 内置双轨评测与发布门禁；自称 OpenClaw 同架构 1/100 代码量。"><meta name="color-scheme" content="light dark"><title>Waku Agent：local-first 的个人 agent harness（四支柱极简实现） | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/harness/2026-10-22-waku-agent-local-first-harness/"><meta property="og:title" content="Waku Agent：local-first 的个人 agent harness（四支柱极简实现）"><meta property="og:description" content="四支柱（Harness/Loop/Memory/Eval）极简实现：loop 约 95 行 Python，memory 单个 SQLite 文件，eval 内置双轨评测与发布门禁；自称 OpenClaw 同架构 1/100 代码量。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/harness/2026-10-22-waku-agent-local-first-harness/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css?v=d86f8a63c5cd"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/harness/">Agent 框架与运行时</a></nav><header class="article-header"><h1 id="waku-agentlocal-first-的个人-agent-harness四支柱极简实现">Waku Agent：local-first 的个人 agent harness（四支柱极简实现）</h1><div class="article-meta"><time datetime="2026-10-22">归档于 2026-10-22</time><a href="/knowledge/raw/materials/harness/2026-10-22-waku-agent-local-first-harness.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=Agent%20%E6%A1%86%E6%9E%B6">Agent 框架</a><a href="/knowledge/?tag=Personal%20Agent">Personal Agent</a><a href="/knowledge/?tag=%E6%9C%AC%E5%9C%B0%E4%BC%98%E5%85%88">本地优先</a><a href="/knowledge/?tag=Memory">Memory</a><a href="/knowledge/?tag=Eval">Eval</a><a href="/knowledge/?tag=Python">Python</a><a href="/knowledge/?tag=MIT">MIT</a></div></header><article class="prose"><ul>
+<li><strong>标题</strong>: Waku Agent — local-first AI agent harness you actually own</li>
+<li><strong>作者/发布方</strong>: ShenSeanChen（Sean Chen，seanchen.io / AutoManus）</li>
+<li><strong>原文 URL</strong>: <a href="https://github.com/ShenSeanChen/waku-agent" rel="noreferrer">https://github.com/ShenSeanChen/waku-agent</a></li>
+<li><strong>发布日期</strong>: 仓库建于 2026-07-10（持续更新）</li>
+<li><strong>归档日期</strong>: 2026-10-22</li>
+<li><strong>标签</strong>: Agent 框架, Personal Agent, 本地优先, Memory, Eval, Python, SQLite, MIT</li>
+<li><strong>保存形式</strong>: 摘要（基于 README 全文阅读）</li>
+<li><strong>阅读/核验状态</strong>: 已读 README 全文；未读源码</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>Waku Agent 是一个 local-first 的个人 AI 助手 harness，主打&quot;代码少到一下午能读完&quot;：用四支柱（Harness / Loop / Memory / Eval）把认真做 agent 的核心机制全部摊开——loop 约 95 行纯 Python，memory 是单个 SQLite 文件，eval 内置确定性测试 + LLM-as-judge 并排与发布门禁；对比 OpenClaw / Hermes 自称&quot;同架构，1/100 代码量&quot;。</p>
+<h2 id="主要要点">主要要点</h2>
+<ul>
+<li><strong>定位</strong>: 与 ChatGPT / Claude Desktop 这类&quot;你用的产品&quot;相对，Waku 是&quot;你拥有的代码库&quot;——loop、memory schema、记忆门、eval harness 全部可读可改。配套有 20 分钟代码走读视频与系统设计白板图（每个框对应一个文件）。</li>
+<li><strong>四支柱</strong>:
+<ul>
+<li><strong>Harness</strong>: 多 gateway 围绕同一个 loop——终端、浏览器 dashboard（localhost:7777，可视化每条消息流经 harness）、voice、Telegram、Discord、WhatsApp。</li>
+<li><strong>Loop</strong>: 约 95 行纯 Python（reason → act → repeat，两种停止方式）。</li>
+<li><strong>Memory</strong>: 三层——semantic（事实）+ episodic（经历）+ procedural（skills）；两个关键机制：gate 决定&quot;要不要记&quot;，consolidation 决定&quot;留什么&quot;。本地状态只有一个文件 <code>~/.waku/state.db</code>（SQLite），任何目录启动都共用。</li>
+<li><strong>Eval / LLM-Ops</strong>: 确定性测试与 LLM-as-judge 并排，带 release gate；每一轮对话都有 trace。</li>
+</ul>
+</li>
+<li><strong>多模型</strong>: Anthropic（默认）、OpenAI、Gemini、DeepSeek、MiniMax、Kimi、GLM、OpenRouter、OpenCode Zen/Go；loop 里只用一种 dialect，其余靠一个约 60 行的 adapter 抹平。<code>pip install waku-agent</code> 即可跑。</li>
+<li><strong>Waku Memory（托管版）</strong>: waku.one——跨 agent 共享的托管 memory（在 Claude Code 里存、在 Waku 里取），<code>waku connect waku-memory</code> 通过 MCP 接入；另可 <code>waku skill export --to claude,codex</code> 把 Waku 的 skills 导出给 Claude Code / Codex。另有 treg（作者的实时数据服务）可 connect 做研究时取数。</li>
+<li><strong>许可证</strong>: 主体（<code>waku/</code>、PyPI 包）MIT；<code>hosted/</code> 目录是 Elastic License 2.0（可自用含商用，不可作为服务提供给他人）；Waku 品牌另行保留。</li>
+<li><strong>仓库元数据</strong>（归档时）: star 2,074，fork 409，commit 455，release 4。</li>
+</ul>
+<h2 id="适用场景">适用场景</h2>
+<ul>
+<li>想读懂一个完整个人 agent 的最小实现（loop / memory / eval 全摊开），做自己 harness 的参考底本</li>
+<li>研究 memory 三层设计与&quot;记忆门 + 巩固&quot;的具体做法</li>
+</ul>
+<h2 id="相关资料">相关资料</h2>
+<ul>
+<li><a href="/knowledge/materials/harness/2026-10-14-personal-agent-reference-architectures/">Raft、OpenMuse、nanoMuse：个人 Agent 架构参考</a> — 同类个人 agent 参考实现对照</li>
+<li><a href="/knowledge/materials/harness/2026-10-01-a13n-agent-framework-analysis/">Converge AI 开源 a13n Agent 框架调研分析</a> — 企业级对照（构建在 Pydantic AI 之上）</li>
+</ul>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/harness/2026-10-23-muse-town-module-implementation-analysis/">Muse 与 Town：按模块拆解个人 Agent 的实现方案 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/harness/2026-10-14-personal-agent-reference-architectures/">Raft、OpenMuse、nanoMuse：个人 Agent 架构参考 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/harness/2026-10-07-pi-durable-vs-opencode/">Pi Durable vs. OpenCode: An Architectural Comparison <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E4%B8%BB%E8%A6%81%E8%A6%81%E7%82%B9">主要要点</a><a class="h2" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF">适用场景</a><a class="h2" href="#%E7%9B%B8%E5%85%B3%E8%B5%84%E6%96%99">相关资料</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>
