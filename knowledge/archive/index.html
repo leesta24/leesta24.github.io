@@ -26,7 +26,7 @@
 <tr>
 <td><a href="/knowledge/materials/infrastructure/">Agent 基础设施</a></td>
 <td>沙箱、部署、多租户、资源调度、MCP 网关与工具接入设施。</td>
-<td>7</td>
+<td>8</td>
 </tr>
 <tr>
 <td><a href="/knowledge/materials/retrieval-data/">检索与数据</a></td>
@@ -88,6 +88,13 @@
 <td>技术分析</td>
 <td>Personal Agent, 记忆, 主动性, 沙箱, 持久执行, 权限</td>
 <td>按技术与功能模块拆解记忆、后台工作、交付、凭证、双层沙箱、URI 文件闸门和产物运行时，明确事实、推断、参考实现与版本冲突。</td>
+</tr>
+<tr>
+<td>2026-10-26</td>
+<td><a href="/knowledge/materials/infrastructure/2026-10-26-layerfs-agent-filesystem/">LayerFS：给 agent 的&quot;临时工作区 + 永久共享历史&quot;文件系统</a></td>
+<td>GitHub (Ephemeral-AI-Lab/layerfs)</td>
+<td>Agent 基础设施, 文件系统, FUSE, 沙箱, 内容寻址, 去重, MIT</td>
+<td>为 agent 设计的 FUSE 文件系统：共享提交历史之上挂载完整可写 Workspace，并行工作、去重 checkpoint 提交、可分支回滚合并；Store 单个 SQLite 文件，157 快照仅 100 MB。</td>
 </tr>
 <tr>
 <td>2026-10-22</td>

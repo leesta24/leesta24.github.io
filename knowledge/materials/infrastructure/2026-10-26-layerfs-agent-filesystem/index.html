@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="为 agent 设计的 FUSE 文件系统：共享提交历史之上挂载完整可写 Workspace，并行工作、去重 checkpoint 提交、可分支回滚合并；Store 单个 SQLite 文件，157 快照仅 100 MB。"><meta name="color-scheme" content="light dark"><title>LayerFS：给 agent 的&quot;临时工作区 + 永久共享历史&quot;文件系统 | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/infrastructure/2026-10-26-layerfs-agent-filesystem/"><meta property="og:title" content="LayerFS：给 agent 的&quot;临时工作区 + 永久共享历史&quot;文件系统"><meta property="og:description" content="为 agent 设计的 FUSE 文件系统：共享提交历史之上挂载完整可写 Workspace，并行工作、去重 checkpoint 提交、可分支回滚合并；Store 单个 SQLite 文件，157 快照仅 100 MB。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/infrastructure/2026-10-26-layerfs-agent-filesystem/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css?v=d86f8a63c5cd"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/infrastructure/">Agent 基础设施</a></nav><header class="article-header"><h1 id="layerfs给-agent-的临时工作区--永久共享历史文件系统">LayerFS：给 agent 的&quot;临时工作区 + 永久共享历史&quot;文件系统</h1><div class="article-meta"><time datetime="2026-10-26">归档于 2026-10-26</time><a href="/knowledge/raw/materials/infrastructure/2026-10-26-layerfs-agent-filesystem.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=Agent%20%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD">Agent 基础设施</a><a href="/knowledge/?tag=%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F">文件系统</a><a href="/knowledge/?tag=FUSE">FUSE</a><a href="/knowledge/?tag=%E6%B2%99%E7%AE%B1">沙箱</a><a href="/knowledge/?tag=%E5%86%85%E5%AE%B9%E5%AF%BB%E5%9D%80">内容寻址</a><a href="/knowledge/?tag=%E5%8E%BB%E9%87%8D">去重</a><a href="/knowledge/?tag=MIT">MIT</a></div></header><article class="prose"><ul>
+<li><strong>标题</strong>: LayerFS — Ephemeral Workspaces, durable shared history</li>
+<li><strong>作者/发布方</strong>: Ephemeral-AI-Lab（layerfs.ai）</li>
+<li><strong>原文 URL</strong>: <a href="https://github.com/Ephemeral-AI-Lab/layerfs" rel="noreferrer">https://github.com/Ephemeral-AI-Lab/layerfs</a></li>
+<li><strong>发布日期</strong>: 仓库建于 2026-08-10（归档时版本 1.1.0）</li>
+<li><strong>归档日期</strong>: 2026-10-26</li>
+<li><strong>标签</strong>: Agent 基础设施, 文件系统, FUSE, 沙箱, 内容寻址, 去重, SQLite, MIT</li>
+<li><strong>保存形式</strong>: 摘要（基于 README 全文阅读）</li>
+<li><strong>阅读/核验状态</strong>: 已读 README 全文；性能数据为发布方自测，未独立验证</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>LayerFS 是为 agent 设计的 FUSE 文件系统：每个 agent 在共享提交历史之上挂载一个完整可写的 Workspace（无需复制基底），并行工作、把改动以去重 checkpoint 形式提交，随后分支、回滚或合并——核心是&quot;算力临时存在，历史永久共享&quot;，现通过 DeepSeek Harness 的 dsh-layerfs 插件落地。</p>
+<h2 id="主要要点">主要要点</h2>
+<ul>
+<li><strong>六大核心想法</strong>:
+<ol>
+<li>Ephemeral Computing：计算只在命令运行时存在；每次 Bash 调用 = 挂载 → 执行 → 提交 → 卸载；</li>
+<li>Decentralized Agents：多台机器上的 agent 共享一个无服务器 Store；</li>
+<li>Multiagent Coordination：一个项目多 Branch，一个 Branch 多 agent；</li>
+<li>Recursive Filesystem：任意深度、任意 Commit 均可递归 fork；</li>
+<li>Ultra Storage Optimization：内容分块去重存储，真实项目 157 个快照仅 100 MB（Btrfs+zstd 的 1/19.9）；</li>
+<li>Instant Bootstrap：依赖随每次挂载自带，无需重装（Workspace 包含 .git、忽略文件、依赖与构建产物）。</li>
+</ol>
+</li>
+<li><strong>配套机制</strong>: 每个 agent 步骤即自动 checkpoint；对象只追加不重写；冲突规则（同文件两处改动拒绝提交，<code>.lww</code> 规则文件可声明&quot;最新编辑获胜&quot;）；大文件小改动只花改动量（chunk 级）。</li>
+<li><strong>实现</strong>: Store 是单个 SQLite 文件（存所有 Branch、Commit 与内容对象，无数据库服务器，daemon 与 SDK 直接打开）；Branch 是可写的 Commit 链，发布到 main 即增加一层 Layer；Workspace 是 FUSE 视图（已提交根 + 自身 overlay），卸载时只删 overlay、不删历史。</li>
+<li><strong>工具调用路径</strong>: 文件工具经 SDK 进程内直写 Store；Bash 走挂载-执行-提交-卸载。</li>
+<li><strong>实测（发布方，1.0.0、main@e5c7aaae05、单样本）</strong>: Cloudflare fs-bench 1.71× 快（12 场景赢 10）；157 快照去重 19.9×；pjdfstest 0 意外失败（overlayfs 通过数的 76%，其余均为有意的格式限制）；fsx 14/14；fsstress 3,755/3,755 一致；smallfile 9/9 更快；fio 混合读写 1.49–2.23×，但顺序写 0.31×、顺序读 0.81×、随机写 0.40× 更慢。</li>
+<li><strong>与先行工作的差异</strong>: overlayfs/UnionFS（上层丢弃或只存目录，LayerFS 把上层变成带历史/合并/冲突的不可变快照）；Btrfs/ZFS（按 extent 共享，LayerFS 按内容分块，全量重写文件仍只存新 chunk）；Git worktrees（Workspace 含整个树，Commit 按工具调用发生而非手动）；<code>try</code>（单机单 overlay，LayerFS 多 agent 共享一 Store）；Apiary（隔离桌面应用，LayerFS 面向 agent 工具调用结果的保留/分支/合并）。</li>
+<li><strong>诚实局限</strong>（README 明示）: Store 仅 Disposable profile，无断电/崩溃耐久性——&quot;只用来存 agent 工作与历史，别当唯一数据副本&quot;；FUSE 视图故意省略 FIFO、socket、设备节点、set-id 位、独立 atime/ctime；顺序 I/O 带宽弱。</li>
+<li><strong>落地形态</strong>: 现主要通过 LayerFS × DSH（DeepSeek Harness 的 dsh-layerfs 插件），session 内 fork Branch、在 Sandbox 中测试、合并发布，Work/History 标签页实时显示各 agent 的 Branch；1.1.0 起支持 Windows dsh Live（WSL2）与 Linux Docker Engine；JS API 已拆为 @layerfs/agent、@layerfs/backend、@layerfs/runtime（与 1.0.0 不兼容）。</li>
+<li><strong>仓库元数据</strong>（归档时）: star 2,112，fork 107，commit 4,135，MIT，另有 WeChat 交流群。</li>
+</ul>
+<h2 id="适用场景">适用场景</h2>
+<ul>
+<li>多 agent 并行改同一项目时的&quot;工作区 + 历史&quot;底座（分支/回滚/合并按工具调用粒度）</li>
+<li>需要 checkpoint 式可回放、可分支的 agent 执行环境设计参考</li>
+<li>与 sandbox 运行时（Amp Orbs、Agent Substrate）对照：LayerFS 解决的是&quot;状态与历史层&quot;，而非&quot;算力层&quot;</li>
+</ul>
+<h2 id="相关资料">相关资料</h2>
+<ul>
+<li><a href="/knowledge/materials/infrastructure/2026-10-22-amp-self-hosted-orbs/">Amp Self-Hosted Orbs：把 agent 执行环境搬进自己的基础设施</a> — agent 执行环境的算力层对照</li>
+<li><a href="/knowledge/materials/infrastructure/2026-10-01-agent-substrate-cncf-sandbox-523/">Sandbox Agent Substrate — CNCF Sandbox 申请（Issue #523）</a> — K8s 沙箱运行时对照</li>
+</ul>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/infrastructure/2026-10-22-amp-self-hosted-orbs/">Amp Self-Hosted Orbs：把 agent 执行环境搬进自己的基础设施 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/infrastructure/2026-10-14-kernel-browser-infrastructure/">Kernel：浏览器会话、认证与可观测性基础设施 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/infrastructure/2026-10-14-linq-imessage-api/">Linq：面向 Personal Agent 的 iMessage 接入 <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E4%B8%BB%E8%A6%81%E8%A6%81%E7%82%B9">主要要点</a><a class="h2" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF">适用场景</a><a class="h2" href="#%E7%9B%B8%E5%85%B3%E8%B5%84%E6%96%99">相关资料</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>
