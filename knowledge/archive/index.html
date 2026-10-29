@@ -11,12 +11,12 @@
 <tr>
 <td><a href="/knowledge/materials/harness/">Agent 框架与运行时</a></td>
 <td>Agent loop、Harness 接口、持久执行、会话与任务编排。框架整体分析归这里，侧重部署资源与沙箱的文章归 infrastructure。</td>
-<td>7</td>
+<td>9</td>
 </tr>
 <tr>
 <td><a href="/knowledge/materials/context-memory/">上下文与记忆</a></td>
 <td>上下文构造、压缩、prompt cache、长期记忆和用户建模。</td>
-<td>3</td>
+<td>4</td>
 </tr>
 <tr>
 <td><a href="/knowledge/materials/evaluation/">评测与优化</a></td>
@@ -26,12 +26,12 @@
 <tr>
 <td><a href="/knowledge/materials/infrastructure/">Agent 基础设施</a></td>
 <td>沙箱、部署、多租户、资源调度、MCP 网关与工具接入设施。</td>
-<td>8</td>
+<td>9</td>
 </tr>
 <tr>
 <td><a href="/knowledge/materials/retrieval-data/">检索与数据</a></td>
 <td>向量搜索、全文检索、混合检索、RAG 与数据库。</td>
-<td>3</td>
+<td>4</td>
 </tr>
 <tr>
 <td><a href="/knowledge/materials/software-engineering/">软件工程</a></td>
@@ -88,6 +88,41 @@
 <td>技术分析</td>
 <td>Personal Agent, 记忆, 主动性, 沙箱, 持久执行, 权限</td>
 <td>按技术与功能模块拆解记忆、后台工作、交付、凭证、双层沙箱、URI 文件闸门和产物运行时，明确事实、推断、参考实现与版本冲突。</td>
+</tr>
+<tr>
+<td>2026-10-28</td>
+<td><a href="/knowledge/materials/retrieval-data/2026-10-28-comma-local-iphone-photo-search/">Comma 本地 iPhone 照片搜索</a></td>
+<td>Comma 博客</td>
+<td>本地检索, 多模态, 照片搜索, OCR, 向量, 隐私</td>
+<td>iPhone 照片经 iCloud 到 Mac 后本地 OCR + 双向量建索引，agent 只拿 ID/文本/联系表、用户选定后才发原图；双模型融合把候选从 4,970 压到 4。</td>
+</tr>
+<tr>
+<td>2026-10-28</td>
+<td><a href="/knowledge/materials/context-memory/2026-10-28-bloome-multiplayer-agent-memory/">Bloome 多人场景下的 agent 记忆设计</a></td>
+<td>Bloome</td>
+<td>Agent 记忆, 多人协作, 身份, 用户建模, 文件记忆</td>
+<td>多人场景记忆须先答&quot;这是关于这个人的、此刻还成立的吗&quot;：每人一套普通文件，卡片正面放常需事实、其余放抽屉按需直查，身份从搜索猜测变成文件夹归属。</td>
+</tr>
+<tr>
+<td>2026-10-28</td>
+<td><a href="/knowledge/materials/harness/2026-10-28-bloome-agent-collaboration-protocol/">Bloome Agent Collaboration Protocol</a></td>
+<td>Bloome</td>
+<td>多智能体, 协作协议, 共享工作区, 任务状态, 冲突</td>
+<td>可见 agent 团队的共享协议层：分布式智能 + 共享协议，环境提供任务状态、新鲜度感知与输出边界，解决重复劳动、过期上下文、无合并结果。</td>
+</tr>
+<tr>
+<td>2026-10-28</td>
+<td><a href="/knowledge/materials/infrastructure/2026-10-28-reason-network-agent-p2p/">Reason Network：用 iroh P2P + MCP 工具层实现的 agent 间通信</a></td>
+<td>Reason Machines / GitHub (reason-machines/reason-network)</td>
+<td>Agent 通信, P2P, iroh, MCP, 多智能体, Rust, 开源</td>
+<td>自研 P2P agent 网络：每机一个 Rust daemon（iroh QUIC），agent 经 MCP 四工具互发消息；核心是带上下文的团队实时会话目录，让 agent 选对收件人而非广播，避免 live agent 碰撞。</td>
+</tr>
+<tr>
+<td>2026-10-28</td>
+<td><a href="/knowledge/materials/harness/2026-10-28-openduet-proactive-agent-template/">OpenDuet：CopilotKit 的开源主动式 agent 模板</a></td>
+<td>GitHub (CopilotKit/OpenDuet)</td>
+<td>Agent 框架, 主动式 Agent, Personal Agent, 自托管, 审批边界, MIT</td>
+<td>CopilotKit 的主动式个人 agent 模板：晨报 + triage + 审批边界（发送/付款/签署/删除前先展示等点头），建在 OpenBot 自托管平台上，全部特征收敛一个 tenant 文件夹。</td>
 </tr>
 <tr>
 <td>2026-10-26</td>

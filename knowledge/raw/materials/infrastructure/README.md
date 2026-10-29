@@ -13,3 +13,4 @@
 - [Linq：面向 Personal Agent 的 iMessage 接入](2026-10-14-linq-imessage-api.md)
 - [Amp Self-Hosted Orbs：把 agent 执行环境搬进自己的基础设施](2026-10-22-amp-self-hosted-orbs.md)
 - [LayerFS：给 agent 的"临时工作区 + 永久共享历史"文件系统](2026-10-26-layerfs-agent-filesystem.md)
+- [Reason Network：用 iroh P2P + MCP 工具层实现的 agent 间通信](2026-10-28-reason-network-agent-p2p.md)

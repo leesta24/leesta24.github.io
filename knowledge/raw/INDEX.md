@@ -4,11 +4,11 @@
 
 | 模块 | 范围 | 资料数 |
 | --- | --- | --- |
-| [Agent 框架与运行时](materials/harness/README.md) | Agent loop、Harness 接口、持久执行、会话与任务编排。框架整体分析归这里，侧重部署资源与沙箱的文章归 infrastructure。 | 7 |
-| [上下文与记忆](materials/context-memory/README.md) | 上下文构造、压缩、prompt cache、长期记忆和用户建模。 | 3 |
+| [Agent 框架与运行时](materials/harness/README.md) | Agent loop、Harness 接口、持久执行、会话与任务编排。框架整体分析归这里，侧重部署资源与沙箱的文章归 infrastructure。 | 9 |
+| [上下文与记忆](materials/context-memory/README.md) | 上下文构造、压缩、prompt cache、长期记忆和用户建模。 | 4 |
 | [评测与优化](materials/evaluation/README.md) | 评测集、裁判、轨迹评估、迭代优化与可观测性。 | 5 |
-| [Agent 基础设施](materials/infrastructure/README.md) | 沙箱、部署、多租户、资源调度、MCP 网关与工具接入设施。 | 8 |
-| [检索与数据](materials/retrieval-data/README.md) | 向量搜索、全文检索、混合检索、RAG 与数据库。 | 3 |
+| [Agent 基础设施](materials/infrastructure/README.md) | 沙箱、部署、多租户、资源调度、MCP 网关与工具接入设施。 | 9 |
+| [检索与数据](materials/retrieval-data/README.md) | 向量搜索、全文检索、混合检索、RAG 与数据库。 | 4 |
 | [软件工程](materials/software-engineering/README.md) | 通用软件设计、工程方法与经典文章。 | 2 |
 | [逆向工程](materials/reverse-engineering/README.md) | 程序行为分析、逆向方法和工具。 | 1 |
 | [Computer Use 与设备操作](materials/computer-use/README.md) | 浏览器、桌面和手机的感知、操作、验证与执行策略；通用浏览器托管和资源部署归 infrastructure。 | 1 |
@@ -22,6 +22,11 @@
 | 日期 | 标题与归档链接 | 来源 | 标签 | 一句话摘要 |
 | --- | --- | --- | --- | --- |
 | 2026-10-23 | [Muse 与 Town：按模块拆解个人 Agent 的实现方案](materials/harness/2026-10-23-muse-town-module-implementation-analysis.md) | 技术分析 | Personal Agent, 记忆, 主动性, 沙箱, 持久执行, 权限 | 按技术与功能模块拆解记忆、后台工作、交付、凭证、双层沙箱、URI 文件闸门和产物运行时，明确事实、推断、参考实现与版本冲突。 |
+| 2026-10-28 | [Comma 本地 iPhone 照片搜索](materials/retrieval-data/2026-10-28-comma-local-iphone-photo-search.md) | Comma 博客 | 本地检索, 多模态, 照片搜索, OCR, 向量, 隐私 | iPhone 照片经 iCloud 到 Mac 后本地 OCR + 双向量建索引，agent 只拿 ID/文本/联系表、用户选定后才发原图；双模型融合把候选从 4,970 压到 4。 |
+| 2026-10-28 | [Bloome 多人场景下的 agent 记忆设计](materials/context-memory/2026-10-28-bloome-multiplayer-agent-memory.md) | Bloome | Agent 记忆, 多人协作, 身份, 用户建模, 文件记忆 | 多人场景记忆须先答"这是关于这个人的、此刻还成立的吗"：每人一套普通文件，卡片正面放常需事实、其余放抽屉按需直查，身份从搜索猜测变成文件夹归属。 |
+| 2026-10-28 | [Bloome Agent Collaboration Protocol](materials/harness/2026-10-28-bloome-agent-collaboration-protocol.md) | Bloome | 多智能体, 协作协议, 共享工作区, 任务状态, 冲突 | 可见 agent 团队的共享协议层：分布式智能 + 共享协议，环境提供任务状态、新鲜度感知与输出边界，解决重复劳动、过期上下文、无合并结果。 |
+| 2026-10-28 | [Reason Network：用 iroh P2P + MCP 工具层实现的 agent 间通信](materials/infrastructure/2026-10-28-reason-network-agent-p2p.md) | Reason Machines / GitHub (reason-machines/reason-network) | Agent 通信, P2P, iroh, MCP, 多智能体, Rust, 开源 | 自研 P2P agent 网络：每机一个 Rust daemon（iroh QUIC），agent 经 MCP 四工具互发消息；核心是带上下文的团队实时会话目录，让 agent 选对收件人而非广播，避免 live agent 碰撞。 |
+| 2026-10-28 | [OpenDuet：CopilotKit 的开源主动式 agent 模板](materials/harness/2026-10-28-openduet-proactive-agent-template.md) | GitHub (CopilotKit/OpenDuet) | Agent 框架, 主动式 Agent, Personal Agent, 自托管, 审批边界, MIT | CopilotKit 的主动式个人 agent 模板：晨报 + triage + 审批边界（发送/付款/签署/删除前先展示等点头），建在 OpenBot 自托管平台上，全部特征收敛一个 tenant 文件夹。 |
 | 2026-10-26 | [LayerFS：给 agent 的"临时工作区 + 永久共享历史"文件系统](materials/infrastructure/2026-10-26-layerfs-agent-filesystem.md) | GitHub (Ephemeral-AI-Lab/layerfs) | Agent 基础设施, 文件系统, FUSE, 沙箱, 内容寻址, 去重, MIT | 为 agent 设计的 FUSE 文件系统：共享提交历史之上挂载完整可写 Workspace，并行工作、去重 checkpoint 提交、可分支回滚合并；Store 单个 SQLite 文件，157 快照仅 100 MB。 |
 | 2026-10-22 | [Amp Self-Hosted Orbs：把 agent 执行环境搬进自己的基础设施](materials/infrastructure/2026-10-22-amp-self-hosted-orbs.md) | Amp | Agent 基础设施, 沙箱, 自托管, 执行环境 | Amp 开放自托管其 agent 执行环境 Orbs：provider 外连 Amp 收 spawn/pause/delete，dispatch 到用户自备程序（Docker/E2B/K8s/Modal 等），控制面托管、执行面 BYOC。 |
 | 2026-10-22 | [Waku Agent：local-first 的个人 agent harness](materials/harness/2026-10-22-waku-agent-local-first-harness.md) | GitHub (ShenSeanChen/waku-agent) | Agent 框架, Personal Agent, 本地优先, Memory, Eval, Python, MIT | 四支柱（Harness/Loop/Memory/Eval）极简实现：loop 约 95 行 Python，memory 单个 SQLite 文件，eval 内置双轨评测与发布门禁；自称 OpenClaw 同架构 1/100 代码量。 |

@@ -8,3 +8,4 @@
 - [Lakebase Search: State-of-the-art full text and vector search for Postgres](2026-09-29-lakebase-search-postgres.md)
 - [Turbopuffer v3：为什么不再以向量索引作为主索引](2026-10-14-turbopuffer-vector-primary-index.md)
 - [XERJ：给 AI agent 的本地搜索（autoindex + reference coding）](2026-10-19-xerj-local-ai-search.md)
+- [Comma 本地 iPhone 照片搜索：本地模型建索引，agent 只拿搜索结果](2026-10-28-comma-local-iphone-photo-search.md)

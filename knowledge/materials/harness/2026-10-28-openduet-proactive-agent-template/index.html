@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="CopilotKit 的主动式个人 agent 模板：晨报 + triage + 审批边界（发送/付款/签署/删除前先展示等点头），建在 OpenBot 自托管平台上，全部特征收敛一个 tenant 文件夹。"><meta name="color-scheme" content="light dark"><title>OpenDuet：CopilotKit 的开源主动式 agent 模板 | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/harness/2026-10-28-openduet-proactive-agent-template/"><meta property="og:title" content="OpenDuet：CopilotKit 的开源主动式 agent 模板"><meta property="og:description" content="CopilotKit 的主动式个人 agent 模板：晨报 + triage + 审批边界（发送/付款/签署/删除前先展示等点头），建在 OpenBot 自托管平台上，全部特征收敛一个 tenant 文件夹。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/harness/2026-10-28-openduet-proactive-agent-template/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css?v=d86f8a63c5cd"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/harness/">Agent 框架与运行时</a></nav><header class="article-header"><h1 id="openduetcopilotkit-的开源主动式-agent-模板">OpenDuet：CopilotKit 的开源主动式 agent 模板</h1><div class="article-meta"><time datetime="2026-10-28">归档于 2026-10-28</time><a href="/knowledge/raw/materials/harness/2026-10-28-openduet-proactive-agent-template.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=Agent%20%E6%A1%86%E6%9E%B6">Agent 框架</a><a href="/knowledge/?tag=%E4%B8%BB%E5%8A%A8%E5%BC%8F%20Agent">主动式 Agent</a><a href="/knowledge/?tag=Personal%20Agent">Personal Agent</a><a href="/knowledge/?tag=%E8%87%AA%E6%89%98%E7%AE%A1">自托管</a><a href="/knowledge/?tag=%E5%AE%A1%E6%89%B9%E8%BE%B9%E7%95%8C">审批边界</a><a href="/knowledge/?tag=MIT">MIT</a></div></header><article class="prose"><ul>
+<li><strong>标题</strong>: OpenDuet — An open-source proactive agent that gets your work done and keeps you in the loop</li>
+<li><strong>作者/发布方</strong>: CopilotKit（同为 OpenBot 与 AG-UI 协议的团队；此前库中 OpenMuse 亦出自该团队）</li>
+<li><strong>原文 URL</strong>: <a href="https://github.com/CopilotKit/OpenDuet" rel="noreferrer">https://github.com/CopilotKit/OpenDuet</a></li>
+<li><strong>发布日期</strong>: 仓库建于 2026-10-21</li>
+<li><strong>归档日期</strong>: 2026-10-28</li>
+<li><strong>标签</strong>: Agent 框架, 主动式 Agent, Personal Agent, 自托管, 审批边界, CopilotKit, MIT</li>
+<li><strong>保存形式</strong>: 摘要（基于 README 全文阅读）</li>
+<li><strong>阅读/核验状态</strong>: 已读 README 全文；未运行</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>OpenDuet 是 CopilotKit 的开源主动式个人 agent 模板：不等你提问，先给晨报（morning brief）、在自己的电脑上继续干活、只在需要你时回来；核心是建在 OpenBot 自托管平台之上的&quot;审批边界&quot;（发送/付款/签署/删除前必须先展示并等你点头），且全部 OpenDuet 特征收敛在一个 tenant 文件夹里，复制即可改造成自己的助手。</p>
+<h2 id="主要要点">主要要点</h2>
+<ul>
+<li><strong>主动式定位</strong>: 不等提问——每天一则晨报（今天有什么、变了什么、哪些要你决策），在自己的电脑（真实浏览器、自己的文件、仅授予的工具）上继续工作，完成后或卡住时汇报；作者明言这是对 Claude Duet 这类主动式助手类别的开源回应（与 Anthropic 无隶属关系）。</li>
+<li><strong>审批边界（核心设计）</strong>:
+<ul>
+<li>每个 agent 动作都经 gateway：先按 policy 检查、写审计记录、再执行；需询问的动作暂停并展示确切动作与触发规则，给出 Refuse / Allow once / Always allow；Deny 规则直接拒绝；</li>
+<li>给他人发消息永远先问一次，展示收件人与全文；发送、付款、签署、删除类默认都要问；</li>
+<li>密码走 masked secret box：值直达目标站点，不进 agent 可读的对话记录；存储的凭据加密、只写、API 不返回、审计日志中脱敏；</li>
+<li>无法正面归类为&quot;读&quot;的工具一律按&quot;写&quot;处理。</li>
+</ul>
+</li>
+<li><strong>架构</strong>: OpenBot server（Hono + CopilotKit runtime）→ triage（区分&quot;需要你 / 可以等&quot;，附带标签集实测 <code>evals/triage</code>）与晨报 → AG-UI 协议的 agent（不限框架：LangGraph / Mastra / CrewAI / Pydantic AI / Google ADK 或手写）→ 每个 agent 独立容器电脑（Chromium、/workspace、shell、浏览器 profile）；线程与记忆走 CopilotKit Intelligence（需免费 Developer 计划的 key，server 无此 key 不启动）；policy/审批/审计/加密凭据存 Postgres + pgvector；MCP 连接器（Google Drive、Notion 等，Composio 代理更多）。</li>
+<li><strong>&quot;复制即拥有&quot;</strong>: 全部 OpenDuet 特征在 <code>openbot/examples/openduet</code> 一个文件夹（brand.yaml、agents.yaml、channels.yaml、model.yaml、skills.yaml），复制后改 <code>TENANT_PACKAGE_DIR</code> 指向自己的包，底层 OpenBot 代码不动、后续仍可合入上游修复。</li>
+<li><strong>已落地功能</strong>: 晨报、triage、Tasks 标签页（建议任务 Start/Hide、Working / Ready for review / Needs input 状态机）、Make（设计系统/看板/幻灯片/文档/网页）、Channels（按工作主题分频道）、语音输入、Gmail + Google Calendar（每人自连 OAuth，另有内置 fake Google 供演示）、Slack / Teams 通道。</li>
+<li><strong>默认模型</strong>: OpenAI <code>gpt-5.6-terra</code>（model.yaml 可改；Anthropic 需 <code>BOT_PROVIDER=anthropic</code>）。</li>
+<li><strong>运行</strong>: Docker + Bun 1.3+ + Node；<code>bash scripts/start.sh</code> 起 Postgres、各 Bot 电脑、API server 与 routine worker，访问 localhost:3010；数据（DB、各 Bot 文件与浏览器 profile）存 Docker volume；托管/部署指南尚未发布。</li>
+<li><strong>仓库元数据</strong>（归档时）: star 530，fork 75，commit 69，MIT，状态 early development。</li>
+</ul>
+<h2 id="适用场景">适用场景</h2>
+<ul>
+<li>主动式个人助手的产品设计参考：晨报 + triage + 审批边界的组合</li>
+<li>自托管 agent 平台的审批/审计边界实现参考（gateway 模式、凭据处理）</li>
+<li>用 OpenBot 做自己助手时的起点模板</li>
+</ul>
+<h2 id="相关资料">相关资料</h2>
+<ul>
+<li><a href="/knowledge/materials/harness/2026-10-14-personal-agent-reference-architectures/">Raft、OpenMuse、nanoMuse：个人 Agent 架构参考</a> — 同团队 OpenMuse 的个人 agent 参考</li>
+<li><a href="/knowledge/materials/harness/2026-10-23-muse-town-module-implementation-analysis/">Muse 与 Town：按模块拆解个人 Agent 的实现方案</a> — 个人 agent 模块化拆解对照</li>
+<li><a href="/knowledge/materials/harness/2026-10-22-waku-agent-local-first-harness/">Waku Agent：local-first 的个人 agent harness</a> — 极简个人 agent 对照</li>
+</ul>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/harness/2026-10-28-bloome-agent-collaboration-protocol/">Bloome Agent Collaboration Protocol <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/harness/2026-10-23-muse-town-module-implementation-analysis/">Muse 与 Town：按模块拆解个人 Agent 的实现方案 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/harness/2026-10-22-waku-agent-local-first-harness/">Waku Agent：local-first 的个人 agent harness <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E4%B8%BB%E8%A6%81%E8%A6%81%E7%82%B9">主要要点</a><a class="h2" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF">适用场景</a><a class="h2" href="#%E7%9B%B8%E5%85%B3%E8%B5%84%E6%96%99">相关资料</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>

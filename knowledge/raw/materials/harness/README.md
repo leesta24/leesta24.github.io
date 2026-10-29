@@ -12,3 +12,5 @@ Agent loop、Harness 接口、持久执行、会话与任务编排。框架整�
 - [Raft、OpenMuse、nanoMuse：个人 Agent 架构参考](2026-10-14-personal-agent-reference-architectures.md)
 - [Muse 与 Town：按模块拆解个人 Agent 的实现方案](2026-10-23-muse-town-module-implementation-analysis.md)
 - [Waku Agent：local-first 的个人 agent harness](2026-10-22-waku-agent-local-first-harness.md)
+- [OpenDuet：CopilotKit 的开源主动式 agent 模板](2026-10-28-openduet-proactive-agent-template.md)
+- [Bloome Agent Collaboration Protocol：可见 agent 团队协作的共享协议层](2026-10-28-bloome-agent-collaboration-protocol.md)

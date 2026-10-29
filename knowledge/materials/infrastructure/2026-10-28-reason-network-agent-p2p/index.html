@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="自研 P2P agent 网络：每机一个 Rust daemon（iroh QUIC），agent 经 MCP 四工具互发消息；核心是带上下文的团队实时会话目录，让 agent 选对收件人而非广播，避免 live agent 碰撞。"><meta name="color-scheme" content="light dark"><title>Reason Network：用 iroh P2P + MCP 工具层实现的 agent 间通信 | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/infrastructure/2026-10-28-reason-network-agent-p2p/"><meta property="og:title" content="Reason Network：用 iroh P2P + MCP 工具层实现的 agent 间通信"><meta property="og:description" content="自研 P2P agent 网络：每机一个 Rust daemon（iroh QUIC），agent 经 MCP 四工具互发消息；核心是带上下文的团队实时会话目录，让 agent 选对收件人而非广播，避免 live agent 碰撞。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/infrastructure/2026-10-28-reason-network-agent-p2p/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css?v=d86f8a63c5cd"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/infrastructure/">Agent 基础设施</a></nav><header class="article-header"><h1 id="reason-network用-iroh-p2p--mcp-工具层实现的-agent-间通信">Reason Network：用 iroh P2P + MCP 工具层实现的 agent 间通信</h1><div class="article-meta"><time datetime="2026-10-28">归档于 2026-10-28</time><a href="/knowledge/raw/materials/infrastructure/2026-10-28-reason-network-agent-p2p.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=Agent%20%E9%80%9A%E4%BF%A1">Agent 通信</a><a href="/knowledge/?tag=P2P">P2P</a><a href="/knowledge/?tag=iroh">iroh</a><a href="/knowledge/?tag=MCP">MCP</a><a href="/knowledge/?tag=%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93">多智能体</a><a href="/knowledge/?tag=Rust">Rust</a><a href="/knowledge/?tag=%E5%BC%80%E6%BA%90">开源</a></div></header><article class="prose"><ul>
+<li><strong>标题</strong>: Reason Network — your team's coding agents, talking to each other</li>
+<li><strong>作者/发布方</strong>: Reason Machines（reasonmachines.com；引擎源自 Lars Talian 的 tincan）</li>
+<li><strong>原文 URL</strong>: <a href="https://reasonmachines.com/network" rel="noreferrer">https://reasonmachines.com/network</a> · 引擎 <a href="https://github.com/reason-machines/reason-network" rel="noreferrer">https://github.com/reason-machines/reason-network</a> · 设计文档 DESIGN.md</li>
+<li><strong>发布日期</strong>: 引擎仓库建于 2026-10-16</li>
+<li><strong>归档日期</strong>: 2026-10-28</li>
+<li><strong>标签</strong>: Agent 通信, P2P, iroh, MCP, 多智能体, 协作, Rust, 开源</li>
+<li><strong>保存形式</strong>: 摘要（基于官网、引擎 README 与 DESIGN.md 前段阅读）</li>
+<li><strong>阅读/核验状态</strong>: 已读官网网络页、引擎 README 全文与 DESIGN.md 概念/架构/网络层部分；未读源码</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>Reason Network 不是用 Google 的 A2A 协议，而是自研的 P2P 网络：每台电脑跑一个 Rust daemon（iroh QUIC 传输），agent 通过 MCP 工具（list_team / send_message / check_inbox / ask_user）互发消息；核心不是消息本身，而是一份&quot;团队实时会话目录&quot;（谁、在哪台机器、哪个 repo/分支、忙还是闲、在干什么），让 agent 能选对收件人而不是广播——从而避免多个 live agent 在同一代码上碰撞。</p>
+<h2 id="主要要点">主要要点</h2>
+<ul>
+<li><strong>定位澄清</strong>: 这里的 A2A 是泛指 agent-to-agent，不是 Google 的 A2A 标准（无 Agent Card、无 HTTP+JSON-RPC）。Reason 自建了一套：P2P 传输 + MCP 工具接口 + 会话目录。</li>
+<li><strong>架构</strong>: 每台机器一个静态 Rust 二进制 daemon（<code>reason-network daemon</code>，SQLite 存 roster、目录、邮箱），agent 侧通过 stdio MCP server（<code>reason-network mcp</code>，unix socket <code>~/.reason/network/sock</code>）连 daemon；另有 <code>reason-network hook</code>（状态/上下文注入/唤醒）与 <code>bridge</code>（Hermes 等原生适配器的 JSON-lines 传输）。</li>
+<li><strong>传输层</strong>: iroh 1.4——QUIC，ed25519 身份认证；同一 Wi-Fi 用 mDNS 发现，互联网用打洞（hole punching），失败则经 HTTPS relay 中转（relay 只看到加密字节）；默认用 Reason 的区域 relay（地址列表经签名后从 reasonmachines.com/network/relays.json 获取），团队也可自建 relay（<code>reason-network relay &lt;url&gt;</code>），此时机器不再接触 n0。</li>
+<li><strong>成员制与身份</strong>: roster 复制到每台机器，每条目由成员机器密钥签名；准入链（创始人自签，之后由已准入机器签名）；invite 是 hash(secret)+过期+单次使用；连接门禁：非活跃成员直接丢弃；名字由 Reason 登录（Google/GitHub/Apple/邮箱）验证，机器只能代表自己的人说话；一台电脑一次只在一个网络。</li>
+<li><strong>寻址与会话目录</strong>: 层级 team → person → machine → session；地址如 <code>alice/api-claude</code>、<code>alice/*</code>、<code>repo:acme/api</code>、<code>*</code>；session 名默认 <code>&lt;repo-or-dir&gt;-&lt;agent&gt;</code>，冲突加 -2/-3；名字绑定到会话（<code>&lt;agent&gt;:&lt;id&gt;</code>），重启/恢复后名字回归且离线消息跟随，名字保留一天后失效；目录信息（repo、分支、忙闲、在干什么）来自会话自己的标题与 todo 列表，agent 无需主动汇报。</li>
+<li><strong>四个工具</strong>:
+<ul>
+<li><code>list_team</code>：看谁在线、各会话的机器、repo、分支与忙闲；</li>
+<li><code>send_message</code>：发给指定 session，回复回到自己的会话；</li>
+<li><code>check_inbox</code>：给无法直接投递的 agent 拉取消息；</li>
+<li><code>ask_user</code>：仅本机 agent 可用，在用户屏幕弹 pop-up（Approve/Deny），答案直接作为用户本人的回答回给 agent（不可由他人伪造）。</li>
+</ul>
+</li>
+<li><strong>投递分层</strong>（按 agent 能力）:
+<ul>
+<li>Push 直达（会话中送达、idle 可唤醒）: Claude Code（收件箱）、Codex（queue）、opencode / pi 插件、Reason；</li>
+<li>Hook 注入（工具调用后或 turn 结束时）: Gemini、Copilot、Grok、Cursor、无 codex 二进制的 Codex；</li>
+<li>Inbox 拉取: DeepSeek Harness、ZCode 及一般 MCP 客户端；</li>
+<li>托管助手（Grok Bot、Muse、ChatGPT 的 Dots）: 经 Reason 服务器 + MCP 端点 <code>https://mcp.reasonmachines.com/mcp</code> 接入，非 P2P 直连。</li>
+</ul>
+</li>
+<li><strong>附件与安全</strong>: 消息可带最多 10 个文本文件（各 256 KB，共 512 KB），接收方存 <code>~/.reason/network/inbox</code>，永不设可执行、永不自动打开；离线消息等待对方上线再发；同机两 engine 间约 2 ms，暖 agent 答短问题约 2 秒（主要是模型思考）。</li>
+<li><strong>与同类项目的区别</strong>（DESIGN.md 自述）: 2026 年约 15 个 agent 互发消息项目，几乎全是单机、单人或仅 Claude；最接近的 agentbus 是 Tailscale 内的个人设备 P2P、他人只是 headless responder，agents-party 是共享加密房间而非目录；Reason 的核心是带上下文的团队实时会话目录。</li>
+<li><strong>仓库元数据</strong>（归档时）: star 1,291，fork 109，commit 279，MIT/Apache-2.0 双许可；Reason CLI（负责安装）免费但不开源。</li>
+</ul>
+<h2 id="适用场景">适用场景</h2>
+<ul>
+<li>多 agent 协作的通信层设计参考：会话目录 + 按能力分层的投递 + 冲突避免（先问再干）</li>
+<li>P2P agent 网络的成员制与身份设计（签名 roster、invite、relay 仅转发密文）</li>
+<li>与 MCP 工具层结合的 agent 间消息接口设计</li>
+</ul>
+<h2 id="相关资料">相关资料</h2>
+<ul>
+<li><a href="/knowledge/materials/infrastructure/2026-10-22-amp-self-hosted-orbs/">Amp Self-Hosted Orbs：把 agent 执行环境搬进自己的基础设施</a> — agent 执行环境的算力层对照</li>
+<li><a href="/knowledge/materials/infrastructure/2026-10-26-layerfs-agent-filesystem/">LayerFS：给 agent 的&quot;临时工作区 + 永久共享历史&quot;文件系统</a> — 多 agent 并行时的状态层对照</li>
+</ul>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/infrastructure/2026-10-26-layerfs-agent-filesystem/">LayerFS：给 agent 的&quot;临时工作区 + 永久共享历史&quot;文件系统 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/infrastructure/2026-10-22-amp-self-hosted-orbs/">Amp Self-Hosted Orbs：把 agent 执行环境搬进自己的基础设施 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/infrastructure/2026-10-14-kernel-browser-infrastructure/">Kernel：浏览器会话、认证与可观测性基础设施 <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E4%B8%BB%E8%A6%81%E8%A6%81%E7%82%B9">主要要点</a><a class="h2" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF">适用场景</a><a class="h2" href="#%E7%9B%B8%E5%85%B3%E8%B5%84%E6%96%99">相关资料</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>

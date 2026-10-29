@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="多人场景记忆须先答&quot;这是关于这个人的、此刻还成立的吗&quot;：每人一套普通文件，卡片正面放常需事实、其余放抽屉按需直查，身份从搜索猜测变成文件夹归属。"><meta name="color-scheme" content="light dark"><title>Bloome 多人场景下的 agent 记忆设计：先回答&quot;这是谁的&quot;，再谈检索 | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/context-memory/2026-10-28-bloome-multiplayer-agent-memory/"><meta property="og:title" content="Bloome 多人场景下的 agent 记忆设计：先回答&quot;这是谁的&quot;，再谈检索"><meta property="og:description" content="多人场景记忆须先答&quot;这是关于这个人的、此刻还成立的吗&quot;：每人一套普通文件，卡片正面放常需事实、其余放抽屉按需直查，身份从搜索猜测变成文件夹归属。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/context-memory/2026-10-28-bloome-multiplayer-agent-memory/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css?v=d86f8a63c5cd"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/context-memory/">上下文与记忆</a></nav><header class="article-header"><h1 id="bloome-多人场景下的-agent-记忆设计先回答这是谁的再谈检索">Bloome 多人场景下的 agent 记忆设计：先回答&quot;这是谁的&quot;，再谈检索</h1><div class="article-meta"><time datetime="2026-10-28">归档于 2026-10-28</time><a href="/knowledge/raw/materials/context-memory/2026-10-28-bloome-multiplayer-agent-memory.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=Agent%20%E8%AE%B0%E5%BF%86">Agent 记忆</a><a href="/knowledge/?tag=%E5%A4%9A%E4%BA%BA%E5%8D%8F%E4%BD%9C">多人协作</a><a href="/knowledge/?tag=%E8%BA%AB%E4%BB%BD">身份</a><a href="/knowledge/?tag=%E7%94%A8%E6%88%B7%E5%BB%BA%E6%A8%A1">用户建模</a><a href="/knowledge/?tag=%E6%96%87%E4%BB%B6%E8%AE%B0%E5%BF%86">文件记忆</a></div></header><article class="prose"><ul>
+<li><strong>标题</strong>: Designing Agent Memory for Multiplayer</li>
+<li><strong>作者/发布方</strong>: Bloome</li>
+<li><strong>原文 URL</strong>: <a href="https://bloome.im/blog/designing-agent-memory-for-multiplayer" rel="noreferrer">https://bloome.im/blog/designing-agent-memory-for-multiplayer</a></li>
+<li><strong>发布日期</strong>: 2026-06-18（更新 2026-06-22）</li>
+<li><strong>归档日期</strong>: 2026-10-28</li>
+<li><strong>标签</strong>: Agent 记忆, 多人协作, 身份, 用户建模, 文件记忆, 检索</li>
+<li><strong>保存形式</strong>: 摘要（基于原文全文阅读）</li>
+<li><strong>阅读/核验状态</strong>: 已读原文全文；作者自述为少量真实对话的鼓励性结果，非大规模实测</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>Bloome 的多人记忆设计：单人记忆回答&quot; 我知道什么&quot;，多人场景必须先回答&quot;这是关于这个人的、此刻还成立的吗&quot;——解法是每人一套普通文件（无隐藏索引、无相似度分数）：卡片正面放每次对话都需要的事实（沟通偏好、严重过敏），其余放抽屉里按需直接打开文件查找；身份从&quot;搜索要猜的东西&quot;变成&quot;这是谁的文件夹&quot;。</p>
+<h2 id="主要要点">主要要点</h2>
+<ul>
+<li><strong>问题根源</strong>: 单人助手的记忆是&quot;一本笔记本&quot;——长期事实笔记 + 近期日志，隐含主语永远是&quot;你&quot;。放进群聊后隐含主语消失：&quot;喜欢简短回复、不用 emoji&quot;若不知是谁的偏好，就会误用。</li>
+<li><strong>为什么&quot;全存下来再搜&quot;救不了</strong>: 检索按文本相似度匹配，返回的是&quot;提到 Mike 的段落&quot;而非&quot;这个人&quot;——两个都叫 Mike 的人无法区分；且检索结果不会自然过期（&quot;Mike 计划去东京&quot;行程结束后仍同样可搜到）。作者点评了两类主流做法：OpenClaw 的检索优先（全存下来、需要时搜），Hermes 的小而精人工档案 + 外部记忆服务按需取——两者对单人都好，但在共享空间都栽在&quot;who&quot;上。</li>
+<li><strong>设计：每人一套文件，可浏览而不只是可查询</strong>:
+<ul>
+<li>每人一小套普通文件，agent 直接打开读，无隐藏索引、无相似度分数居中；</li>
+<li>每条事实只做一次判断：放&quot;卡片正面&quot;（每次与此人对话都要看到，如沟通偏好、严重过敏）还是&quot;抽屉&quot;（真实、可取回，但不贴在额头上）；</li>
+<li>卡片正面必须短：什么都呈现的记忆等于什么都没呈现——关键事实会淹没在一百条不重要的里面；正面容量有硬上限（但作者承认上限只是兜底，不是好品味）。</li>
+</ul>
+</li>
+<li><strong>召回机制借自 coding agent</strong>: 文件记忆的经典失败是 agent 觉得抽屉&quot;大概不相关&quot;而不去看；解法是让 agent 像工程师找函数定义一样——需要时直接对文件做纯文本搜索、当场查找，而非维护一个猜相关性的索引。作者强调这不是换名头的&quot;全搜&quot;：没有索引要同步，事实以纯文本、按人分文件存放，&quot;who&quot;与&quot;是否仍成立&quot;几乎免费获得。</li>
+<li><strong>实测（作者自述，非严谨评估）</strong>: 真实对话中抽屉里的事实（食物过敏、宠物名、旅行计划）被问到时正确召回；单条消息里的多条细节被合理分流（沟通偏好与过敏上正面、时效性项目细节进抽屉）；旧的单笔记本记忆在日常工作中被 agent 自行重组为新形态。作者明确谨慎：只是少量对话 + 强模型的结果，未测弱模型是否仍可靠开抽屉；agent 自行决定正面内容是否可信仍是开放问题。</li>
+<li><strong>开放问题</strong>: 一人认识成百上千人时是否还成立；agent 能否被信任自己策展记忆（什么留正面、什么淡出）；&quot;who-first&quot;能否从人扩展到项目、团队、房间里的其他 agent。</li>
+<li><strong>核心论断</strong>: 问题不在检索质量，而在记忆的&quot;单位&quot;错了——单本笔记本没有&quot;who&quot;的概念，纯相似度搜索也没有；共享空间把&quot;who、且是否仍成立&quot;变成第一问题，而最便宜的诚实答案是 coding agent 早已信任的东西：一人一套可直接读写的纯文本笔记。</li>
+</ul>
+<h2 id="适用场景">适用场景</h2>
+<ul>
+<li>多人/多 agent 共享空间的记忆设计：身份优先于相似度</li>
+<li>文件式记忆 vs 向量检索的取舍参考（&quot;who&quot;与&quot;时效&quot;免费获得 vs 索引同步成本）</li>
+<li>与协作协议对照：记忆管&quot;关于谁&quot;，协作协议管&quot;谁在干什么、进度到哪&quot;</li>
+</ul>
+<h2 id="相关资料">相关资料</h2>
+<ul>
+<li><a href="/knowledge/materials/harness/2026-10-28-bloome-agent-collaboration-protocol/">Bloome Agent Collaboration Protocol：可见 agent 团队协作的共享协议层</a> — 同团队协作协议</li>
+<li><a href="/knowledge/materials/context-memory/2026-10-14-muse-memory-unofficial-archive/">Muse 记忆与后台整理：非官方档案阅读</a> — 单人助手记忆分层对照</li>
+<li><a href="/knowledge/materials/harness/2026-10-22-waku-agent-local-first-harness/">Waku Agent：local-first 的个人 agent harness</a> — 三层记忆 + 记忆门对照</li>
+</ul>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/context-memory/2026-10-14-muse-memory-unofficial-archive/">Muse 记忆与后台整理：非官方档案阅读 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/context-memory/2026-10-14-typesafe-context-design-excerpts/">TypeSafe coding agent 思考：KV cache、工具发现与上下文重建（摘录） <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/context-memory/2026-10-06-raft-constructed-initial-context/">Constructed Initial Context（Raft 冷唤醒成本降低 60%） <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E4%B8%BB%E8%A6%81%E8%A6%81%E7%82%B9">主要要点</a><a class="h2" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF">适用场景</a><a class="h2" href="#%E7%9B%B8%E5%85%B3%E8%B5%84%E6%96%99">相关资料</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>

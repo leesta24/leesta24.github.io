@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="iPhone 照片经 iCloud 到 Mac 后本地 OCR + 双向量建索引，agent 只拿 ID/文本/联系表、用户选定后才发原图；双模型融合把候选从 4,970 压到 4。"><meta name="color-scheme" content="light dark"><title>Comma 本地 iPhone 照片搜索：本地模型建索引，agent 只拿搜索结果 | Lest</title><link rel="canonical" href="https://leesta24.github.io/knowledge/materials/retrieval-data/2026-10-28-comma-local-iphone-photo-search/"><meta property="og:title" content="Comma 本地 iPhone 照片搜索：本地模型建索引，agent 只拿搜索结果"><meta property="og:description" content="iPhone 照片经 iCloud 到 Mac 后本地 OCR + 双向量建索引，agent 只拿 ID/文本/联系表、用户选定后才发原图；双模型融合把候选从 4,970 压到 4。"><meta property="og:type" content="article"><meta property="og:url" content="https://leesta24.github.io/knowledge/materials/retrieval-data/2026-10-28-comma-local-iphone-photo-search/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="/assets/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/knowledge/assets/knowledge.css?v=d86f8a63c5cd"><link rel="stylesheet" href="/knowledge/assets/highlight-light.css" media="(prefers-color-scheme: light)"><link rel="stylesheet" href="/knowledge/assets/highlight-dark.css" media="(prefers-color-scheme: dark)"></head><body><a class="skip-link" href="#main">跳到正文</a><header class="site-header shell"><nav class="nav" aria-label="主导航"><a class="brand" href="/">Lest.</a><div class="nav-links"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/knowledge/" aria-current="page">Knowledge</a><a href="https://github.com/leesta24" rel="noreferrer">GitHub</a></div></nav></header><main id="main" class="shell reading-layout"><div class="reading-main"><nav class="breadcrumb" aria-label="面包屑"><a href="/knowledge/">知识库</a><span aria-hidden="true">/</span><a href="/knowledge/materials/retrieval-data/">检索与数据</a></nav><header class="article-header"><h1 id="comma-本地-iphone-照片搜索本地模型建索引agent-只拿搜索结果">Comma 本地 iPhone 照片搜索：本地模型建索引，agent 只拿搜索结果</h1><div class="article-meta"><time datetime="2026-10-28">归档于 2026-10-28</time><a href="/knowledge/raw/materials/retrieval-data/2026-10-28-comma-local-iphone-photo-search.md" download>下载 Markdown ↓</a></div><div class="entry-tags"><a href="/knowledge/?tag=%E6%9C%AC%E5%9C%B0%E6%A3%80%E7%B4%A2">本地检索</a><a href="/knowledge/?tag=%E5%A4%9A%E6%A8%A1%E6%80%81">多模态</a><a href="/knowledge/?tag=%E7%85%A7%E7%89%87%E6%90%9C%E7%B4%A2">照片搜索</a><a href="/knowledge/?tag=OCR">OCR</a><a href="/knowledge/?tag=%E5%90%91%E9%87%8F">向量</a><a href="/knowledge/?tag=%E9%9A%90%E7%A7%81">隐私</a></div></header><article class="prose"><ul>
+<li><strong>标题</strong>: Keep your iPhone photos local, and let Comma find them</li>
+<li><strong>作者/发布方</strong>: Comma（comma.surf 博客）</li>
+<li><strong>原文 URL</strong>: <a href="https://comma.surf/blog/local-iphone-photo-search" rel="noreferrer">https://comma.surf/blog/local-iphone-photo-search</a></li>
+<li><strong>发布日期</strong>: 2026-10-28</li>
+<li><strong>归档日期</strong>: 2026-10-28</li>
+<li><strong>标签</strong>: 本地检索, 多模态, 照片搜索, OCR, 向量, 隐私, Comma</li>
+<li><strong>保存形式</strong>: 摘要（基于原文全文阅读）</li>
+<li><strong>阅读/核验状态</strong>: 已读原文全文；为官方搭建指南（示例配置，非 Comma 内置功能），未实测</li>
+</ul>
+<h2 id="一句话摘要">一句话摘要</h2>
+<p>Comma 的本地照片搜索搭建指南：iPhone 照片经 iCloud 同步到 Mac 后，用本地模型做 OCR + 双向量（Chinese-CLIP 与 Qwen3-VL-Embedding）建索引，agent 通过 <code>lpa</code> 命令搜索——agent 只拿到照片 ID、日期、识别文本与候选缩略图联系表，用户选定后才把原图送进对话；照片本体不离开本地，索引永不外发。</p>
+<h2 id="主要要点">主要要点</h2>
+<ul>
+<li><strong>隐私架构</strong>: agent 不需要照片副本；重活（OCR、向量化）由本地模型做；agent 只拿到搜索结果（ID、日期、识别文本、需要挑选时的一张缩略图联系表），最终选定的照片才进对话。注意点：若 Comma 用云端模型，搜索结果与被查看的图片仍会发给模型厂商；&quot;本地&quot;指 OCR、向量与索引在导出之后全本地；Comma 开源、可自托管。</li>
+<li><strong>搭建三步</strong>: iCloud Photos 同步到 Mac 并每日导出到文件夹 → 本地模型处理（每图 OCR + Chinese-CLIP + Qwen3-VL-Embedding 向量化）→ 存入本地数据库，一个命令 <code>lpa</code> 搜索。iPhone 端不做任何改动。</li>
+<li><strong>搜索结果的证据分级</strong>: Text match（全部词都在图片文字里）、Possible（看起来像，容易混淆）、Low confidence（没有更好时才展示）；<code>--prefer text</code> 优先文字匹配（证件、卡片、截图），<code>--prefer picture</code> 优先形似图片（猫、海滩）；几分钟内拍的近重复照片合并为一条结果。</li>
+<li><strong>不确定时不猜</strong>: 候选不确定时 agent 把缩略图排成一张最多 9 格的编号联系表请用户选（&quot;1 and 2&quot;），选定后才发送。</li>
+<li><strong>双模型校准（约 5 万张库实测）</strong>: 单用 Qwen3-VL-Embedding 时人工选中的正确答案排名低于单用 Chinese-CLIP；双排名合并后每项至少不差于任一单模型；&quot;Possible&quot;要求双模型相似度同时过线后，一次查询的候选从 4,970 降到 4；代价是搜索从约 3 秒变 3.5–6 秒。</li>
+<li><strong>硬件与升级路径</strong>: 示例在 16 GB MacBook Air 上跑 Qwen3-VL-Embedding-2B；可换 8B 向量模型（需全部重算向量）；可加 Qwen3-VL-4B/8B-Instruct 生成每图一句话描述与标签存入文本索引（24 GB MBP 上 8B 用 8-bit 量化；标签只作粗筛，不保证正确）。</li>
+<li><strong>语言处理</strong>: Chinese-CLIP 主要在中文图文上训练，英文查询不可靠；OCR 中英文都读，Qwen3-VL-Embedding 多语言——做法是把中英文表述放进同一次搜索（可写进 Skill）；英文为主的库可换回原始 CLIP（同样需重算向量）。</li>
+<li><strong>找人</strong>: 直接用 Apple Photos 已有的人脸分组，自身不做人脸识别；命名流程是 agent 分批编号请用户确认（&quot;3 是妈妈&quot;），未确认的分组不视为任何人；按人名搜索（提两人则只返回两人同框），可与内容、时间组合；名字未确认或重名时明说而不猜；纠错可撤销。</li>
+<li><strong>视频搜索</strong>: 与照片分开（默认只搜照片），<code>--source video</code> 才搜；视频本身不进模型，每 5 秒取一帧、每视频最多 12 帧，帧按照片流程处理，帧命中即整个视频作为一条结果，<code>lpa video</code> 发送；局限：不搜声音、不识别视频里的人、长视频中一闪而过的画面可能漏掉。</li>
+<li><strong>LocalPhotoAgent（<code>lpa</code>，作者自研、将开源）</strong>: 每步每图单独记录进度，可随时停、续跑，改设置只重跑受影响步骤；工作时监控内存、温度、磁盘空间，超限暂停；命令只有 search / sheet / preview / video 四个。</li>
+<li><strong>接 Comma</strong>: Settings &gt; Devices 添加设备 → 在存照片的 Mac 上装 Comma Connector → 访问权限开到 Full → 写一条 Skill（先搜索、不确定时给联系表、用户选定后再发送）。</li>
+<li><strong>信任与边界</strong>: 索引只读原件，永不移动/编辑/删除；搜索不碰外置硬盘（只有做联系表或发送时才读）；但 Full 权限意味着 agent 在这台 Mac 上也能跑 <code>lpa</code> 之外的命令；文字匹配只说明词被找到，不等于就是你要的照片；标记完成时仍需自己检查发来的照片。</li>
+</ul>
+<h2 id="适用场景">适用场景</h2>
+<ul>
+<li>个人 agent 的本地多模态检索参考：OCR + 双向量融合 + 证据分级的搜索设计</li>
+<li>隐私敏感资料（证件、卡片）的&quot;索引本地、结果进对话&quot;模式</li>
+<li>与&quot;agent 看不到手机相册&quot;类限制的绕过思路对照：不直连手机，改在已有同步路径（iCloud → Mac）上建索引</li>
+</ul>
+<h2 id="相关资料">相关资料</h2>
+<ul>
+<li><a href="/knowledge/materials/retrieval-data/2026-10-19-xerj-local-ai-search/">XERJ：给 AI agent 的本地搜索</a> — 本地索引 + agent 搜索的另一实现（代码/文档/日志）</li>
+</ul>
+</article><section class="related"><h2>同主题阅读</h2><ul><li><a href="/knowledge/materials/retrieval-data/2026-10-19-xerj-local-ai-search/">XERJ：给 AI agent 的本地搜索 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/retrieval-data/2026-10-14-turbopuffer-vector-primary-index/">Turbopuffer v3：为什么不再以向量索引作为主索引 <span aria-hidden="true">↗</span></a></li><li><a href="/knowledge/materials/retrieval-data/2026-09-29-lakebase-search-postgres/">Lakebase Search: State-of-the-art full text and vector search for Postgres <span aria-hidden="true">↗</span></a></li></ul></section><a class="back-link" href="/knowledge/">← 返回全部资料</a></div><aside class="toc" aria-label="本文目录"><details open><summary>本文目录</summary><nav><a class="h2" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%91%98%E8%A6%81">一句话摘要</a><a class="h2" href="#%E4%B8%BB%E8%A6%81%E8%A6%81%E7%82%B9">主要要点</a><a class="h2" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF">适用场景</a><a class="h2" href="#%E7%9B%B8%E5%85%B3%E8%B5%84%E6%96%99">相关资料</a></nav></details></aside></main><footer class="footer shell"><span>Lest / Juyi Wu</span><a href="/knowledge/">Knowledge Base</a></footer></body></html>
